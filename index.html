@@ -60,15 +60,26 @@
     <script type="text/babel">
       const { useState, useEffect } = React;
 
+      // ============================
+      // Tamaños del logo de la lama
+      // (cámbialos a tu gusto, en px)
+      // ============================
+      const LAMA_BADGE_SIZE = 112; // tamaño del recuadro amarillo
+      const LAMA_ICON_SIZE = 88;   // tamaño de la imagen dentro
+
       // --- Componentes auxiliares ---
 
       function LlamaBadge() {
         return (
-          <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-amber-200 flex items-center justify-center shadow-sm">
+          <div
+            className="rounded-2xl bg-amber-200 flex items-center justify-center shadow-sm"
+            style={{ width: LAMA_BADGE_SIZE, height: LAMA_BADGE_SIZE }}
+          >
             <img
               src="https://thelamanest.com/wp-content/uploads/2025/11/ChatGPT-Image-29-nov-2025-18_44_56.png"
               alt="TheLamaNest - Lama"
-              className="w-14 h-14 md:w-16 md:h-16 object-contain"
+              className="object-contain"
+              style={{ width: LAMA_ICON_SIZE, height: LAMA_ICON_SIZE }}
               loading="lazy"
             />
           </div>
