@@ -10,10 +10,6 @@ const path = require("path");
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-// Cargamos el índice LAMA como dependencia estática para que Netlify
-// lo incluya dentro del bundle de la función.
-const lamaIndex = require("./data/lama_index.json");
-
 // --- Utilidades comunes ---
 
 const corsHeaders = {
@@ -23,14 +19,55 @@ const corsHeaders = {
 };
 
 function loadIndex() {
-  const parsed = lamaIndex;
+  // En Netlify, __dirname es la carpeta del bundle de la función.
+  const indexPath = path.join(__dirname, "data", "lama_index.json");
+  const raw = fs.readFileSync(indexPath, "utf-8");
+  const parsed = JSON.parse(raw);
 
   if (Array.isArray(parsed)) return parsed;
   if (Array.isArray(parsed.products)) return parsed.products;
 
-  throw new Error(
-    "Formato inesperado en lama_index.json (se esperaba un array o { products: [] })"
-  );
+  throw new Error("Formato inesperado en lama_index.json");
+}
+
+// Carga robusta de blogs: busca en el directorio "data" cualquier fichero
+// que empiece por "<ASIN>_" y acabe en "BLOG.TXT" (ignorando mayúsculas/minúsculas).
+function loadBlogFile(asin) {
+  const dataDir = path.join(__dirname, "data");
+  const asinNorm = (asin || "").trim().toUpperCase();
+
+  let files;
+  try {
+    files = fs.readdirSync(dataDir);
+  } catch (err) {
+    console.error("No se pudo leer el directorio de blogs:", dataDir, err);
+    return "";
+  }
+
+  const target = files.find((name) => {
+    const upper = name.toUpperCase();
+    return (
+      upper.startsWith(asinNorm + "_") &&
+      upper.endsWith("BLOG.TXT")
+    );
+  });
+
+  if (!target) {
+    console.error(
+      `No se encontró fichero de blog para ASIN ${asinNorm} en ${dataDir}. Archivos disponibles:`,
+      files
+    );
+    return "";
+  }
+
+  const filePath = path.join(dataDir, target);
+
+  try {
+    return fs.readFileSync(filePath, "utf-8");
+  } catch (err) {
+    console.error(`Error leyendo blog ${filePath}:`, err);
+    return "";
+  }
 }
 
 async function callGemini(promptText) {
@@ -84,10 +121,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 405,
       headers: corsHeaders,
-      body: JSON.stringify({
-        success: false,
-        error: "Método no permitido"
-      })
+      body: JSON.stringify({ success: false, error: "Método no permitido" })
     };
   }
 
@@ -215,40 +249,23 @@ ${JSON.stringify(prodB, null, 2)}
 
     // --- MODO NARRATIVE: IA sobre blogs/meta-reviews ---
     if (mode === "narrative") {
-      const blogPathA = path.join(
-        __dirname,
-        "data",
-        `${prodA.asin}_ES_blog.txt`
-      );
-      const blogPathB = path.join(
-        __dirname,
-        "data",
-        `${prodB.asin}_ES_blog.txt`
-      );
-
-      let blogA = "";
-      let blogB = "";
-
-      try {
-        blogA = fs.readFileSync(blogPathA, "utf-8");
-      } catch (err) {
-        console.error("No se pudo leer blog A:", blogPathA, err.message);
-      }
-
-      try {
-        blogB = fs.readFileSync(blogPathB, "utf-8");
-      } catch (err) {
-        console.error("No se pudo leer blog B:", blogPathB, err.message);
-      }
+      const blogA = loadBlogFile(prodA.asin);
+      const blogB = loadBlogFile(prodB.asin);
 
       if (!blogA || !blogB) {
+        const missingAsins = [];
+        if (!blogA) missingAsins.push(prodA.asin);
+        if (!blogB) missingAsins.push(prodB.asin);
+
         return {
           statusCode: 404,
           headers: corsHeaders,
           body: JSON.stringify({
             success: false,
             error:
-              "No se encontraron los blogs para uno o ambos productos. Revisa los archivos *_ES_blog.txt."
+              "No se encontraron los blogs para los siguientes ASIN: " +
+              missingAsins.join(", ") +
+              ". Asegúrate de que existan archivos <ASIN>_XX_blog.txt en la carpeta 'data' de la función."
           })
         };
       }
