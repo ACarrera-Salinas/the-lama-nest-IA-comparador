@@ -93,7 +93,10 @@
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-600">
               <span className="font-semibold">
-                {product.mean_stars?.toFixed ? product.mean_stars.toFixed(1) : product.mean_stars} ★
+                {product.mean_stars?.toFixed
+                  ? product.mean_stars.toFixed(1)
+                  : product.mean_stars}{" "}
+                ★
               </span>
               {product.n_reviews && (
                 <span className="text-slate-500">
@@ -148,7 +151,7 @@
         selectedProduct,
         asinValue,
         onChangeAsin,
-        onSelectProduct,
+        onSelectProduct
       }) {
         const [query, setQuery] = useState("");
         const [suggestions, setSuggestions] = useState([]);
@@ -332,7 +335,7 @@
               const res = await fetch("/.netlify/functions/verifymyth", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ mode: "index" }),
+                body: JSON.stringify({ mode: "index" })
               });
               const data = await res.json();
               if (!data.success) {
@@ -372,8 +375,8 @@
               body: JSON.stringify({
                 mode: "metrics",
                 asinA: selected1.asin,
-                asinB: selected2.asin,
-              }),
+                asinB: selected2.asin
+              })
             });
             const data = await res.json();
             if (!data.success) {
@@ -383,7 +386,7 @@
             setMetricsData({
               productA: pA,
               productB: pB,
-              analysis: data.analysis || "",
+              analysis: data.analysis || ""
             });
             setMetricsStatus("success");
           } catch (err) {
@@ -406,8 +409,8 @@
               body: JSON.stringify({
                 mode: "narrative",
                 asinA: selected1.asin,
-                asinB: selected2.asin,
-              }),
+                asinB: selected2.asin
+              })
             });
             const data = await res.json();
             if (!data.success) {
@@ -559,13 +562,11 @@
                         (p, idx) => (
                           <div
                             key={p.asin}
-                            className="bg-white border border-slate-200 rounded-2xl p-5 text-sm"
+                            className="bg-white border border-slate-200 rounded-2xl p-5 text-sm flex flex-col"
                           >
                             <div className="flex justify-between items-start mb-3">
                               <div className="text-xs uppercase font-semibold text-slate-500 tracking-wide">
-                                {idx === 0
-                                  ? "Producto A"
-                                  : "Producto B"}
+                                {idx === 0 ? "Producto A" : "Producto B"}
                               </div>
                               <div className="text-xs text-slate-500">
                                 {p.market} · {p.categoria_inferida}
@@ -607,10 +608,7 @@
                                 </span>
                               )}
                               {p.fecha_ultima_review && (
-                                <span>
-                                  · Última reseña:{" "}
-                                  {p.fecha_ultima_review}
-                                </span>
+                                <span>· Última reseña: {p.fecha_ultima_review}</span>
                               )}
                             </div>
 
@@ -625,20 +623,28 @@
                               <h3 className="text-xs font-semibold text-emerald-800 mb-1">
                                 Lo que más suele gustar
                               </h3>
-                              <BulletList
-                                items={p.top_pros}
-                                tone="good"
-                              />
+                              <BulletList items={p.top_pros} tone="good" />
                             </div>
 
-                            <div className="mt-3">
+                            <div className="mt-3 mb-4">
                               <h3 className="text-xs font-semibold text-rose-800 mb-1">
                                 Lo que suele dar problemas
                               </h3>
-                              <BulletList
-                                items={p.top_contras}
-                                tone="bad"
-                              />
+                              <BulletList items={p.top_contras} tone="bad" />
+                            </div>
+
+                            {/* CTA compra */}
+                            <div className="mt-auto pt-2">
+                              <a
+                                href={`https://thelamanest.com/es-${p.asin}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition-colors"
+                              >
+                                {idx === 0
+                                  ? "Comprar producto A"
+                                  : "Comprar producto B"}
+                              </a>
                             </div>
                           </div>
                         )
