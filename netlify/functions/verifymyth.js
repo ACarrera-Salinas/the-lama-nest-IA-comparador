@@ -1,284 +1,267 @@
 // netlify/functions/verifymyth.js
-// Función principal de TheLamaNest IA Comparator
-// Modos soportados:
-// - "index": devuelve el índice completo (catálogo ligero) para el front
-// - "metrics": devuelve los 2 productos completos + breve análisis IA de datos
-// - "narrative": compara los blogs y devuelve una opinión persuasiva
 
 const fs = require("fs");
 const path = require("path");
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-// --- CORS común ---
-
+// ---------------------- CORS ----------------------
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST,OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
-// --- Localización de la carpeta data ---
+// ---------------------- HELPERS RUTAS DATA ----------------------
+function getDataDir() {
+  // Candidatas donde Netlify suele empaquetar los archivos incluidos
+  const candidates = [
+    path.join(__dirname, "data"),
+    path.join(__dirname, "netlify", "functions", "data"),
+    "/var/task/netlify/functions/data",
+    "/var/task/data",
+  ];
 
-const DATA_DIR_CANDIDATES = [
-  // 1) data junto al bundle de la función
-  path.join(__dirname, "data"),
-  // 2) estructura típica de Netlify con included_files
-  path.join(__dirname, "netlify", "functions", "data"),
-  // 3) rutas absolutas típicas en runtime
-  "/var/task/data",
-  "/var/task/netlify/functions/data",
-  "/var/data",
-];
-
-function loadDataRoot() {
-  const tried = [];
-
-  for (const candidate of DATA_DIR_CANDIDATES) {
-    tried.push(candidate);
-    try {
-      if (fs.existsSync(candidate)) {
-        return { root: candidate, tried };
-      }
-    } catch {
-      // ignoramos errores de fs.existsSync y seguimos
+  for (const dir of candidates) {
+    if (fs.existsSync(dir)) {
+      return dir;
     }
   }
 
-  const msg =
-    "No se encontró carpeta 'data'. Probadas rutas: " + tried.join(" | ");
-  throw new Error(msg);
+  throw new Error(
+    `No se encontró carpeta 'data'. Probadas rutas: ${candidates.join(" | ")}`
+  );
 }
 
-// --- Carga de índice Lama ---
+function loadJsonFromData(fileName) {
+  const dataDir = getDataDir();
+  const fullPath = path.join(dataDir, fileName);
 
-function loadIndex() {
-  const { root } = loadDataRoot();
-  const indexPath = path.join(root, "lama_index.json");
+  if (!fs.existsSync(fullPath)) {
+    throw new Error(`No se encontró el archivo: ${fullPath}`);
+  }
 
-  const raw = fs.readFileSync(indexPath, "utf-8");
-  const parsed = JSON.parse(raw);
-
-  if (Array.isArray(parsed)) return parsed;
-  if (Array.isArray(parsed.products)) return parsed.products;
-
-  throw new Error("Formato inesperado en " + indexPath);
+  const raw = fs.readFileSync(fullPath, "utf8");
+  return JSON.parse(raw);
 }
 
-// --- Cliente Gemini ---
+function loadTextFromData(fileName) {
+  const dataDir = getDataDir();
+  const fullPath = path.join(dataDir, fileName);
 
+  if (!fs.existsSync(fullPath)) {
+    throw new Error(`No se encontró el archivo: ${fullPath}`);
+  }
+
+  return fs.readFileSync(fullPath, "utf8");
+}
+
+// Carga del índice LAMA
+function loadLamaIndex() {
+  return loadJsonFromData("lama_index.json");
+}
+
+// Carga de blogs por ASIN e idioma
+function loadBlogByAsin(asin, lang = "ES") {
+  const langUpper = (lang || "ES").toUpperCase();
+  const fileName = `${asin}_${langUpper}_blog.txt`; // p.ej. B0CLLCDM7R_ES_blog.txt
+  return loadTextFromData(fileName);
+}
+
+// ---------------------- GEMINI 2.5 FLASH ----------------------
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+
+// Petición a Gemini 2.5-flash
 async function callGemini(promptText) {
   if (!GEMINI_API_KEY) {
-    throw new Error("Falta GEMINI_API_KEY en variables de entorno");
+    throw new Error("Falta la variable de entorno GEMINI_API_KEY");
   }
 
-  const url =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" +
-    GEMINI_API_KEY;
+  const url = `https://generativelanguage.googleapis.com/v1/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
-  const res = await fetch(url, {
+  const body = {
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: promptText }],
+      },
+    ],
+  };
+
+  const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: promptText }],
-        },
-      ],
-    }),
+    body: JSON.stringify(body),
   });
 
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error("Error Gemini: " + txt);
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error Gemini: ${errorText}`);
   }
 
-  const data = await res.json();
-  const text =
-    data &&
-    data.candidates &&
-    data.candidates[0] &&
-    data.candidates[0].content &&
-    data.candidates[0].content.parts &&
-    data.candidates[0].content.parts[0] &&
-    data.candidates[0].content.parts[0].text;
+  const data = await response.json();
 
-  return (text || "").trim();
+  const text =
+    data?.candidates?.[0]?.content?.parts
+      ?.map((p) => p.text || "")
+      .join(" ")
+      .trim() || "";
+
+  if (!text) {
+    throw new Error("Gemini devolvió una respuesta vacía");
+  }
+
+  return text;
 }
 
-// --- Handler Netlify ---
+// Prompt para la opinión final de la IA
+function buildFinalOpinionPrompt({ asinA, asinB, blogA, blogB, lang }) {
+  const langUpper = (lang || "ES").toUpperCase();
 
+  if (langUpper === "ES") {
+    return `
+Eres una IA experta en comparar productos de Amazon.
+Tienes a continuación DOS borradores de posts de blog escritos con la metodología LAMA.
+Cada post analiza un producto diferente y contiene secciones como:
+- "Resumen Lama"
+- "Lo que más gusta"
+- "Áreas de mejora"
+- "Pros y contras"
+- "A quién le recomendamos este producto"
+- "Conclusión"
+
+No repitas el texto literal de los blogs, pero ÚSALOS como base para entender los puntos fuertes y débiles de cada producto.
+
+DATOS:
+- Producto A (ASIN ${asinA}):
+${blogA}
+
+- Producto B (ASIN ${asinB}):
+${blogB}
+
+TAREA:
+1. Escribe una única OPINIÓN FINAL COMPARATIVA en español, en 1–2 párrafos cortos.
+2. Deja claro:
+   - Para qué tipo de persona o uso recomendarías más el Producto A.
+   - Para qué tipo de persona o uso recomendarías más el Producto B.
+   - Si tuvieras que elegir SOLO UNO para la mayoría de usuarios, cuál y por qué.
+3. Estilo:
+   - Lenguaje claro, cercano y honesto.
+   - No uses formato markdown, ni listas con guiones, ni emojis.
+   - No inventes funcionalidades que no se deduzcan de los textos.
+`;
+  } else {
+    // Versión en inglés, por si algún día la necesitas
+    return `
+You are an AI that compares two Amazon products using two blog drafts written with the LAMA methodology.
+Each blog has sections like "Lama summary", "Highlights", "Improvements", "Pros and Cons",
+"Recommended for", and "Conclusion".
+
+Do NOT copy the blogs verbatim, but USE them as the basis for your reasoning.
+
+DATA:
+- Product A (ASIN ${asinA}):
+${blogA}
+
+- Product B (ASIN ${asinB}):
+${blogB}
+
+TASK:
+1. Write a single FINAL COMPARATIVE OPINION in English, 1–2 short paragraphs.
+2. Make clear:
+   - For what type of person/use Product A is a better fit.
+   - For what type of person/use Product B is a better fit.
+   - If you had to pick ONLY ONE for most users, which one and why.
+3. Style:
+   - Clear, friendly, honest language.
+   - No markdown formatting, no bullet lists, no emojis.
+   - Do not invent features that are not supported by the texts.
+`;
+  }
+}
+
+// ---------------------- HANDLER PRINCIPAL ----------------------
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 204, headers: corsHeaders, body: "" };
-  }
-
-  if (event.httpMethod !== "POST") {
     return {
-      statusCode: 405,
+      statusCode: 204,
       headers: corsHeaders,
-      body: JSON.stringify({
-        success: false,
-        error: "Método no permitido",
-      }),
+      body: "",
     };
   }
 
   try {
-    const body = JSON.parse(event.body || "{}");
-    const mode = body.mode;
-    const asinA = (body.asinA || "").trim();
-    const asinB = (body.asinB || "").trim();
+    const query = event.queryStringParameters || {};
+    const mode = query.mode || "index";
 
-    if (!mode) {
-      return {
-        statusCode: 400,
-        headers: corsHeaders,
-        body: JSON.stringify({
-          success: false,
-          error: "Falta 'mode' en la petición.",
-        }),
-      };
-    }
-
-    // Cargamos índice una sola vez por petición
-    const products = loadIndex();
-
-    // --- MODO INDEX: devolver catálogo ligero para el front ---
-    if (mode === "index") {
-      const lite = products.map((p) => ({
-        asin: p.asin,
-        nombre_producto: p.nombre_producto,
-        market: p.market,
-        categoria_inferida: p.categoria_inferida,
-        n_reviews: p.n_reviews,
-        mean_stars: p.mean_stars,
-        tags_tematica: p.tags_tematica || [],
-      }));
-
-      return {
-        statusCode: 200,
-        headers: corsHeaders,
-        body: JSON.stringify({ success: true, products: lite }),
-      };
-    }
-
-    // A partir de aquí, los modos necesitan dos ASIN
-    if (!asinA || !asinB) {
-      return {
-        statusCode: 400,
-        headers: corsHeaders,
-        body: JSON.stringify({
-          success: false,
-          error: "Faltan 'asinA' y/o 'asinB' en la petición.",
-        }),
-      };
-    }
-
-    const prodA = products.find(
-      (p) => (p.asin || "").toUpperCase() === asinA.toUpperCase()
-    );
-    const prodB = products.find(
-      (p) => (p.asin || "").toUpperCase() === asinB.toUpperCase()
-    );
-
-    if (!prodA || !prodB) {
-      return {
-        statusCode: 404,
-        headers: corsHeaders,
-        body: JSON.stringify({
-          success: false,
-          error:
-            "No encontramos uno o ambos ASIN en lama_index.json. Revisa el índice.",
-        }),
-      };
-    }
-
-    // --- MODO METRICS: IA sobre datos Lama (no usa blogs) ---
-    if (mode === "metrics") {
-      let analysis = null;
-
+    // Cuerpo por si el frontend manda JSON en POST
+    let bodyData = {};
+    if (event.body) {
       try {
-        const prompt = `
-Eres el comparador de productos de TheLamaNest.
-
-Tienes dos productos que ya han sido analizados con nuestro "Lama index".
-Cada producto se describe con todas estas variables:
-- nombre_producto
-- market
-- categoria_inferida
-- mean_stars, n_reviews
-- lama_lb95, lama_ub95
-- prob_chasco
-- fecha_ultima_review
-- stars_pct (distribución reseñas 1–5)
-- top_pros
-- top_contras
-- tags_tematica
-
-Tu tarea:
-1) Comparar los dos productos de forma clara y honesta.
-2) Explicar en pocas frases quién debería elegir el Producto A y quién el Producto B.
-3) Terminar con una recomendación clara, pero sin ser agresivo: ayuda al usuario a decidir cuál encaja mejor con su caso.
-4) No uses markdown, no pongas títulos. Solo texto plano, 6–10 frases.
-
-Producto A:
-${JSON.stringify(prodA, null, 2)}
-
-Producto B:
-${JSON.stringify(prodB, null, 2)}
-`;
-
-        analysis = await callGemini(prompt);
-      } catch (err) {
-        console.error("Error en Gemini metrics:", err.message || err);
-        // Devolvemos igualmente los datos aunque falle el análisis IA
-        analysis = null;
+        bodyData = JSON.parse(event.body);
+      } catch {
+        bodyData = {};
       }
+    }
 
+    if (mode === "index") {
+      // Devuelve el índice LAMA completo
+      const indexData = loadLamaIndex();
       return {
         statusCode: 200,
         headers: corsHeaders,
         body: JSON.stringify({
           success: true,
-          products: [prodA, prodB],
-          analysis,
+          mode: "index",
+          data: indexData,
         }),
       };
     }
 
-    // --- MODO NARRATIVE: IA sobre blogs/meta-reviews ---
+    if (mode === "metrics") {
+      // Si algún día lo necesitas, puedes construir métricas aquí.
+      // De momento devuelve un stub para no romper nada.
+      return {
+        statusCode: 200,
+        headers: corsHeaders,
+        body: JSON.stringify({
+          success: true,
+          mode: "metrics",
+          message:
+            "Endpoint 'metrics' disponible. Implementa aquí las métricas si las necesitas.",
+        }),
+      };
+    }
+
     if (mode === "narrative") {
-      const { root: dataRoot } = loadDataRoot();
+      // Obtenemos ASIN y idioma desde query o body
+      const asinA =
+        bodyData.asinA || bodyData.asin1 || query.asinA || query.asin1;
+      const asinB =
+        bodyData.asinB || bodyData.asin2 || query.asinB || query.asin2;
+      const lang = bodyData.lang || query.lang || "ES";
 
-      const blogPathA = path.join(
-        dataRoot,
-        `${prodA.asin}_ES_blog.txt`
-      );
-      const blogPathB = path.join(
-        dataRoot,
-        `${prodB.asin}_ES_blog.txt`
-      );
-
-      let blogA = "";
-      let blogB = "";
-
-      try {
-        blogA = fs.readFileSync(blogPathA, "utf-8");
-      } catch (err) {
-        console.error("No se pudo leer blog A:", blogPathA, err.message || err);
-      }
-
-      try {
-        blogB = fs.readFileSync(blogPathB, "utf-8");
-      } catch (err) {
-        console.error("No se pudo leer blog B:", blogPathB, err.message || err);
-      }
-
-      if (!blogA || !blogB) {
+      if (!asinA || !asinB) {
         return {
-          statusCode: 404,
+          statusCode: 400,
+          headers: corsHeaders,
+          body: JSON.stringify({
+            success: false,
+            error:
+              "Faltan ASINs para generar la opinión final de la IA (asinA y asinB).",
+          }),
+        };
+      }
+
+      let blogA;
+      let blogB;
+
+      try {
+        blogA = loadBlogByAsin(asinA, lang);
+        blogB = loadBlogByAsin(asinB, lang);
+      } catch (fileErr) {
+        console.error("Error cargando blogs:", fileErr);
+        return {
+          statusCode: 500,
           headers: corsHeaders,
           body: JSON.stringify({
             success: false,
@@ -288,38 +271,28 @@ ${JSON.stringify(prodB, null, 2)}
         };
       }
 
-      const prompt = `
-Eres el "Lama Sabio" de TheLamaNest.
+      const prompt = buildFinalOpinionPrompt({
+        asinA,
+        asinB,
+        blogA,
+        blogB,
+        lang,
+      });
 
-Tienes dos productos que ya hemos analizado en profundidad. A continuación verás:
-- Información básica de cada producto (nombre y ASIN).
-- El texto completo de nuestras meta-reviews (blogs) para cada uno.
-
-Tu tarea:
-1) Leer y comparar ambos textos.
-2) Explicar en un único párrafo largo (8–12 frases) las diferencias clave entre Producto A y Producto B.
-3) Señalar para qué tipo de usuario encaja mejor cada uno, usando un tono cercano, claro y honesto.
-4) Terminar con una recomendación suave pero clara: si tuvieras que elegir solo uno para la mayoría de usuarios, ¿cuál sería y por qué?
-5) No uses listas ni títulos, no uses markdown. Solo texto plano.
-
-Producto A:
-- Nombre: ${prodA.nombre_producto}
-- ASIN: ${prodA.asin}
-- Blog A:
-${blogA}
-
-Producto B:
-- Nombre: ${prodB.nombre_producto}
-- ASIN: ${prodB.asin}
-- Blog B:
-${blogB}
-`;
-
-      let text;
       try {
-        text = await callGemini(prompt);
-      } catch (err) {
-        console.error("Error en Gemini narrative:", err.message || err);
+        const opinion = await callGemini(prompt);
+
+        return {
+          statusCode: 200,
+          headers: corsHeaders,
+          body: JSON.stringify({
+            success: true,
+            mode: "narrative",
+            opinion,
+          }),
+        };
+      } catch (gemErr) {
+        console.error("Error generando la opinión final de la IA:", gemErr);
         return {
           statusCode: 500,
           headers: corsHeaders,
@@ -327,19 +300,13 @@ ${blogB}
             success: false,
             error:
               "Error generando la opinión final de la IA: " +
-              (err.message || String(err)),
+              (gemErr.message || String(gemErr)),
           }),
         };
       }
-
-      return {
-        statusCode: 200,
-        headers: corsHeaders,
-        body: JSON.stringify({ success: true, text }),
-      };
     }
 
-    // --- Modo desconocido ---
+    // Modo no reconocido
     return {
       statusCode: 400,
       headers: corsHeaders,
@@ -350,15 +317,13 @@ ${blogB}
     };
   } catch (err) {
     console.error("Error general verifymyth:", err);
-
     return {
       statusCode: 500,
       headers: corsHeaders,
       body: JSON.stringify({
         success: false,
         error:
-          "Error interno en verifymyth: " +
-          (err.message || String(err)),
+          "Error interno en verifymyth: " + (err.message || String(err)),
       }),
     };
   }
