@@ -1,3 +1,5 @@
+// netlify/functions/verifymyth.js
+
 const fs = require("fs");
 const path = require("path");
 
@@ -29,145 +31,44 @@ function getDataDir() {
   );
 }
 
-// Carga lama_index.json (si existe)
-function loadIndex() {
+// Carga lama_index.json y devuelve SIEMPRE un array de productos
+function loadIndexProducts() {
   const dataDir = getDataDir();
   const indexPath = path.join(dataDir, "lama_index.json");
+
   if (!fs.existsSync(indexPath)) {
-    // No es fatal para metrics/narrative, sí para mode=index
-    throw new Error(`No se ha encontrado lama_index.json en ${indexPath}`);
+    throw new Error(
+      `No se ha encontrado lama_index.json en ${indexPath}. Asegúrate de generarlo.`
+    );
   }
+
   const raw = fs.readFileSync(indexPath, "utf8");
-  return JSON.parse(raw);
-}
+  const indexData = JSON.parse(raw);
 
-/**
- * Fallback: carga un producto a partir del fichero <ASIN>_ES_normalized_spider.jsonl
- * Devuelve un objeto con campos mínimos para poder hacer la comparativa.
- */
-function loadProductFromSpider(asin) {
-  const dataDir = getDataDir();
-  const filename = `${asin}_ES_normalized_spider.jsonl`;
-  const fullPath = path.join(dataDir, filename);
-
-  if (!fs.existsSync(fullPath)) {
-    return null; // no hay datos de ese producto
-  }
-
-  const raw = fs.readFileSync(fullPath, "utf8");
-  const lines = raw.split(/\r?\n/).filter(Boolean);
-
-  let meta = null;
-  let stats = null;
-
-  for (const line of lines) {
-    let obj;
-    try {
-      obj = JSON.parse(line);
-    } catch (e) {
-      continue;
-    }
-
-    // Meta: buscamos algo con nombre_producto / title
-    if (!meta && (obj.nombre_producto || obj.title)) {
-      meta = obj;
-    }
-
-    // Stats agregadas: buscamos algo con mean_stars o stars_pct
-    if (!stats && (obj.mean_stars != null || obj.stars_pct)) {
-      stats = obj;
-    }
-
-    if (meta && stats) break;
-  }
-
-  if (!meta && !stats) {
-    return null;
-  }
-
-  const base = meta || stats || {};
-
-  const product = {
-    asin: base.asin || base.ASIN || asin,
-    nombre_producto:
-      base.nombre_producto || base.title || `Producto ${asin}`,
-    market: base.market || "ES",
-    mean_stars:
-      (stats && stats.mean_stars) != null
-        ? stats.mean_stars
-        : base.mean_stars != null
-        ? base.mean_stars
-        : null,
-    n_reviews:
-      (stats && (stats.n_total ?? stats.n_reviews)) != null
-        ? stats.n_total ?? stats.n_reviews
-        : base.n_total ?? base.n_reviews ?? null,
-    stars_pct:
-      (stats && stats.stars_pct) != null ? stats.stars_pct : base.stars_pct,
-    stars_count:
-      (stats && stats.stars_count) != null
-        ? stats.stars_count
-        : base.stars_count,
-  };
-
-  // Campos extra útiles si existen
-  const extraKeys = [
-    "lama_lb95",
-    "lama_ub95",
-    "prob_chasco",
-    "top_pros",
-    "top_contras",
-    "fecha_ultima_review",
-    "categoria_inferida",
-    "tags_tematica",
-  ];
-
-  for (const key of extraKeys) {
-    if (stats && stats[key] != null) {
-      product[key] = stats[key];
-    } else if (meta && meta[key] != null) {
-      product[key] = meta[key];
-    }
-  }
-
-  return product;
-}
-
-/**
- * Busca un producto concreto por ASIN dentro del índice
- * y, si no está, intenta cargarlo desde el JSONL individual.
- */
-function findProductMeta(indexData, asin) {
-  if (!asin) return null;
-  const target = asin.toUpperCase();
-
-  // 1) Objeto con claves por ASIN
-  if (indexData && !Array.isArray(indexData) && typeof indexData === "object") {
-    if (indexData[target]) return indexData[target];
-
-    // 2) Array dentro de .products
-    if (Array.isArray(indexData.products)) {
-      const p = indexData.products.find((x) => {
-        const a1 = (x.asin || "").toUpperCase();
-        const a2 = (x.ASIN || "").toUpperCase();
-        return a1 === target || a2 === target;
-      });
-      if (p) return p;
-    }
-  }
-
-  // 3) Índice como array plano
+  let products = [];
   if (Array.isArray(indexData)) {
-    const p = indexData.find((x) => {
-      const a1 = (x.asin || "").toUpperCase();
-      const a2 = (x.ASIN || "").toUpperCase();
-      return a1 === target || a2 === target;
-    });
-    if (p) return p;
+    products = indexData;
+  } else if (Array.isArray(indexData.products)) {
+    products = indexData.products;
+  } else if (indexData && typeof indexData === "object") {
+    // caso objeto tipo mapa {ASIN: {...}, ...}
+    products = Object.values(indexData);
   }
 
-  // 4) Fallback: leer fichero <ASIN>_ES_normalized_spider.jsonl
-  return loadProductFromSpider(target);
+  return products;
+}
+
+// Busca producto en el array de productos por asin / ASIN
+function findProductByAsin(products, asin) {
+  if (!asin) return null;
+  const target = asin.trim().toUpperCase();
+  return (
+    products.find((p) => {
+      const a1 = (p.asin || "").toString().toUpperCase();
+      const a2 = (p.ASIN || "").toString().toUpperCase();
+      return a1 === target || a2 === target;
+    }) || null
+  );
 }
 
 // Carga la meta-review en texto
@@ -242,7 +143,6 @@ exports.handler = async (event) => {
     };
   }
 
-  // Parámetros GET y POST
   const queryParams = event.queryStringParameters || {};
   let bodyParams = {};
   if (event.httpMethod === "POST" && event.body) {
@@ -257,7 +157,6 @@ exports.handler = async (event) => {
   const rawMode = queryParams.mode || bodyParams.mode || "metrics";
   const mode = String(rawMode).toLowerCase();
 
-  // Asins (solo necesarios para metrics / narrative)
   const asinA = (queryParams.asinA || bodyParams.asinA || "").trim();
   const asinB = (queryParams.asinB || bodyParams.asinB || "").trim();
 
@@ -267,82 +166,55 @@ exports.handler = async (event) => {
      * Devuelve catálogo completo para buscador por nombre.
      *********************/
     if (mode === "index") {
-      const indexData = loadIndex();
-
-      let products = [];
-      if (Array.isArray(indexData)) {
-        products = indexData;
-      } else if (Array.isArray(indexData.products)) {
-        products = indexData.products;
-      } else if (
-        indexData &&
-        typeof indexData === "object" &&
-        !Array.isArray(indexData)
-      ) {
-        products = Object.values(indexData);
-      }
-
-      const entries = products.length;
-
+      const products = loadIndexProducts();
       return {
         statusCode: 200,
         headers: corsHeaders,
         body: JSON.stringify({
           success: true,
           mode: "index",
-          entries,
+          entries: products.length,
           products,
         }),
       };
     }
 
     /*********************
-     * Delante solo para modes que comparan dos ASIN
+     * MODOS QUE COMPARAN DOS ASIN
      *********************/
     if (!asinA || !asinB) {
       throw new Error(
         "Debes enviar asinA y asinB (por ejemplo asinA=XXX&asinB=YYY)."
       );
     }
-    if (asinA.toUpperCase() === asinB.toUpperCase()) {
+    if (asinA === asinB) {
       throw new Error("Los dos productos deben ser distintos (ASIN diferentes).");
     }
 
-    // Cargamos índice si existe; si no, lo dejamos en null (fallback a JSONL)
-    let indexData = null;
-    try {
-      indexData = loadIndex();
-    } catch (e) {
-      console.warn("No se ha podido cargar lama_index.json, se usará solo JSONL:", e.message);
-      indexData = null;
-    }
-
-    const productA = findProductMeta(indexData, asinA);
-    const productB = findProductMeta(indexData, asinB);
+    const products = loadIndexProducts();
+    const productA = findProductByAsin(products, asinA);
+    const productB = findProductByAsin(products, asinB);
 
     if (!productA || !productB) {
       throw new Error(
-        `No se encontraron datos Lama para uno o ambos productos (${asinA}, ${asinB}). ` +
-          "Comprueba que existen sus ficheros *_ES_normalized_spider.jsonl en la carpeta data."
+        `No se encontraron datos Lama en lama_index.json para uno o ambos productos (${asinA}, ${asinB}). ` +
+          "Asegúrate de que ese ASIN esté incluido en lama_index.json (generándolo con tu script de índice agregado)."
       );
     }
 
     /*********************
      * MODO METRICS
-     * Resumen rápido centrado en datos + productos A/B
      *********************/
     if (mode === "metrics") {
       const quickSummaryPrompt = `
 Eres el asistente del Comparador Lama.
 
-Tienes los datos JSON de dos productos (A y B), con puntuaciones medias, distribución de estrellas, posible probabilidad de chasco y, si están disponibles, los principales pros y contras.
+Tienes los datos JSON de dos productos (A y B), con puntuaciones medias, distribución de estrellas, probabilidad de chasco y los principales pros y contras.
 
 Escribe un único resumen muy breve y claro (máximo unas 140 palabras) para un usuario medio, centrado en:
-
-- Cómo se comparan en calidad percibida.
-- Si hay información, cómo se compara el riesgo de chasco.
-- Qué tipo de ventajas destacan los usuarios en cada uno (si hay datos).
-- Qué tipo de problemas son más frecuentes (si hay datos).
+- Cómo se comparan en calidad percibida y riesgo de chasco.
+- Qué tipo de ventajas destacan los usuarios en cada uno.
+- Qué tipo de problemas son más frecuentes en cada uno.
 - En qué escenarios generales parece encajar mejor A y en cuáles B.
 
 No menciones “JSON”, ni “modelo de lenguaje”, ni “Gemini” y no uses listas ni títulos. Solo un texto corrido.
@@ -370,7 +242,6 @@ ${JSON.stringify(productB)}
 
     /*********************
      * MODO NARRATIVE
-     * Opinión final corta basada en meta-reviews
      *********************/
     if (mode === "narrative") {
       const blogA = loadBlog(asinA, "ES");
@@ -417,9 +288,7 @@ ${blogB}
       };
     }
 
-    /*********************
-     * Modo no reconocido
-     *********************/
+    // Modo no reconocido
     return {
       statusCode: 400,
       headers: corsHeaders,
