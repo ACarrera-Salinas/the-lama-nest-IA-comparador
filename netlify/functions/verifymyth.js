@@ -10,7 +10,7 @@ const path = require("path");
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-// --- Utilidades comunes ---
+// --- CORS ---
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,9 +18,45 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type"
 };
 
+// --- Localización robusta de la carpeta "data" ---
+
+let cachedDataDir = null;
+
+function resolveDataDir() {
+  if (cachedDataDir) return cachedDataDir;
+
+  const candidates = [
+    // Lo más habitual en Netlify con in-source functions
+    path.join(__dirname, "data"),
+    path.join(__dirname, "..", "data"),
+    path.join(__dirname, "netlify", "functions", "data"),
+    path.join(process.cwd(), "netlify", "functions", "data"),
+    path.join(process.cwd(), "data")
+  ];
+
+  for (const dir of candidates) {
+    try {
+      if (fs.existsSync(dir) && fs.statSync(dir).isDirectory()) {
+        cachedDataDir = dir;
+        return dir;
+      }
+    } catch (_) {
+      // ignoramos y probamos el siguiente
+    }
+  }
+
+  throw new Error(
+    "No se encontró carpeta 'data'. Probadas rutas: " +
+      candidates.join(" | ")
+  );
+}
+
+// --- Carga del índice ---
+
 function loadIndex() {
-  // En Netlify, __dirname es la carpeta del bundle de la función.
-  const indexPath = path.join(__dirname, "data", "lama_index.json");
+  const dataDir = resolveDataDir();
+  const indexPath = path.join(dataDir, "lama_index.json");
+
   const raw = fs.readFileSync(indexPath, "utf-8");
   const parsed = JSON.parse(raw);
 
@@ -30,10 +66,12 @@ function loadIndex() {
   throw new Error("Formato inesperado en lama_index.json");
 }
 
-// Carga robusta de blogs: busca en el directorio "data" cualquier fichero
-// que empiece por "<ASIN>_" y acabe en "BLOG.TXT" (ignorando mayúsculas/minúsculas).
+// --- Carga robusta de blogs ---
+// Busca en "data" cualquier fichero que empiece por "<ASIN>_"
+// y termine en "BLOG.TXT" (ignorando mayúsculas/minúsculas).
+
 function loadBlogFile(asin) {
-  const dataDir = path.join(__dirname, "data");
+  const dataDir = resolveDataDir();
   const asinNorm = (asin || "").trim().toUpperCase();
 
   let files;
@@ -46,10 +84,7 @@ function loadBlogFile(asin) {
 
   const target = files.find((name) => {
     const upper = name.toUpperCase();
-    return (
-      upper.startsWith(asinNorm + "_") &&
-      upper.endsWith("BLOG.TXT")
-    );
+    return upper.startsWith(asinNorm + "_") && upper.endsWith("BLOG.TXT");
   });
 
   if (!target) {
@@ -69,6 +104,8 @@ function loadBlogFile(asin) {
     return "";
   }
 }
+
+// --- Llamada a Gemini ---
 
 async function callGemini(promptText) {
   if (!GEMINI_API_KEY) {
