@@ -1,885 +1,682 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <title>TheLamaNest – Comparador Lama</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Tailwind CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            lama: {
-              bg: '#faf5ee',
-              accent: '#fbbf24',
-              dark: '#0f172a',
-              soft: '#fef3c7'
+  <head>
+    <meta charset="UTF-8" />
+    <title>TheLamaNest – Comparador IA</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta
+      name="description"
+      content="Comparador IA de TheLamaNest: elige dos productos que ya tengan meta-review y deja que el Lama sabio te ayude a decidir."
+    />
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- React 18 UMD + Babel para JSX en el navegador -->
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.development.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"
+    ></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+      body {
+        background: #fff7ed; /* naranja muy claro */
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+          "Segoe UI", sans-serif;
+      }
+
+      /* Scroll suave dentro de la página */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Pequeña animación de aparición */
+      .fade-in {
+        animation: fade-in 0.4s ease-out;
+      }
+
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+
+  <body class="text-slate-900">
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      // --- Componentes auxiliares ---
+
+      function LlamaBadge() {
+        return (
+          <div className="w-16 h-16 rounded-2xl bg-amber-200 flex items-center justify-center shadow-sm">
+            <span className="text-3xl">🦙</span>
+          </div>
+        );
+      }
+
+      function ProductMiniCard({ product }) {
+        if (!product) return null;
+
+        return (
+          <div className="mt-3 border border-amber-200 bg-amber-50/60 rounded-xl p-3 text-sm fade-in">
+            <div className="font-semibold text-slate-900 mb-1 line-clamp-2">
+              {product.nombre_producto}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-2">
+              <span>ASIN: {product.asin}</span>
+              <span className="inline-block w-1 h-1 rounded-full bg-slate-300"></span>
+              <span>{product.market}</span>
+              {product.categoria_inferida && (
+                <>
+                  <span className="inline-block w-1 h-1 rounded-full bg-slate-300"></span>
+                  <span>{product.categoria_inferida}</span>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-600">
+              <span className="font-semibold">
+                {product.mean_stars?.toFixed ? product.mean_stars.toFixed(1) : product.mean_stars} ★
+              </span>
+              {product.n_reviews && (
+                <span className="text-slate-500">
+                  ({product.n_reviews.toLocaleString("es-ES")} reseñas)
+                </span>
+              )}
+            </div>
+            {product.tags_tematica && product.tags_tematica.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {product.tags_tematica.slice(0, 4).map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-medium"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      function SuggestionsList({ items, onSelect }) {
+        if (!items || items.length === 0) return null;
+
+        return (
+          <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-56 overflow-auto text-sm">
+            {items.map((p) => (
+              <button
+                key={p.asin}
+                type="button"
+                className="w-full text-left px-3 py-2 hover:bg-amber-50"
+                onClick={() => onSelect(p)}
+              >
+                <div className="font-medium text-slate-900 line-clamp-1">
+                  {p.nombre_producto}
+                </div>
+                <div className="text-[11px] text-slate-500">
+                  ASIN: {p.asin} · {p.mean_stars ?? "?"}★ ·{" "}
+                  {p.categoria_inferida || "—"}
+                </div>
+              </button>
+            ))}
+          </div>
+        );
+      }
+
+      function ProductSelector({
+        slot,
+        catalog,
+        selectedProduct,
+        asinValue,
+        onChangeAsin,
+        onSelectProduct,
+      }) {
+        const [query, setQuery] = useState("");
+        const [suggestions, setSuggestions] = useState([]);
+
+        useEffect(() => {
+          if (!query || query.trim().length < 3 || !catalog.length) {
+            setSuggestions([]);
+            return;
+          }
+          const q = query.toLowerCase();
+          const results = catalog.filter((p) =>
+            (p.nombre_producto || "").toLowerCase().includes(q)
+          );
+          setSuggestions(results.slice(0, 7));
+        }, [query, catalog]);
+
+        const handleSelect = (product) => {
+          onSelectProduct(product);
+          onChangeAsin(product.asin);
+          setQuery(product.nombre_producto);
+          setSuggestions([]);
+        };
+
+        const handleUseAsinClick = () => {
+          const asin = (asinValue || "").trim();
+          if (!asin) return;
+          if (!catalog.length) return;
+
+          const product = catalog.find(
+            (p) => (p.asin || "").toUpperCase() === asin.toUpperCase()
+          );
+          if (!product) {
+            alert(
+              "No encontramos ese ASIN en el índice Lama. Revisa el código o añade el producto a lama_index.json."
+            );
+            return;
+          }
+          onSelectProduct(product);
+        };
+
+        return (
+          <div className="bg-white border border-amber-200/70 rounded-2xl p-4 md:p-5 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center font-bold">
+                {slot}
+              </div>
+              <h2 className="font-semibold text-slate-900">
+                Producto {slot}
+              </h2>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div className="relative">
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  Busca por nombre, marca o modelo
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-slate-300">
+                    🔍
+                  </span>
+                  <input
+                    type="text"
+                    className="w-full pl-8 pr-3 py-2 rounded-lg bg-amber-50 border border-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:bg-white text-sm"
+                    placeholder="Ej: Oral-B Pro 3..."
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                  />
+                </div>
+                <SuggestionsList items={suggestions} onSelect={handleSelect} />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="block text-xs font-medium text-slate-500">
+                  ¿Vienes de Amazon o ya conoces el código?
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    className="flex-1 px-3 py-2 rounded-lg bg-amber-50 border border-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:bg-white text-sm"
+                    placeholder="Ej: B0CLRYN7BX"
+                    value={asinValue}
+                    onChange={(e) => onChangeAsin(e.target.value.toUpperCase())}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleUseAsinClick}
+                    className="px-3 py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-black transition-colors"
+                  >
+                    Usar ASIN
+                  </button>
+                </div>
+              </div>
+
+              <div className="text-xs text-slate-500">
+                {selectedProduct ? (
+                  <span>Producto seleccionado:</span>
+                ) : (
+                  <span>Todavía no has seleccionado ningún producto.</span>
+                )}
+              </div>
+
+              <ProductMiniCard product={selectedProduct} />
+            </div>
+          </div>
+        );
+      }
+
+      function StarsRow({ product }) {
+        if (!product || !product.stars_pct) return <span>—</span>;
+        const pct = product.stars_pct;
+        const order = ["5", "4", "3", "2", "1"];
+        return (
+          <div className="space-y-1 text-xs">
+            {order.map((k) => {
+              if (pct[k] == null) return null;
+              const value = pct[k] * 100;
+              return (
+                <div key={k} className="flex items-center gap-2">
+                  <span className="w-6 text-right font-medium">{k}★</span>
+                  <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-amber-400"
+                      style={{ width: `${Math.min(100, value)}%` }}
+                    ></div>
+                  </div>
+                  <span className="w-9 text-right text-slate-600">
+                    {value.toFixed(0)}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
+
+      function BulletList({ items, tone }) {
+        if (!items || !items.length) return <span className="text-xs">—</span>;
+        const base =
+          "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] mr-1 mb-1";
+        const ok =
+          "bg-emerald-50 text-emerald-800 border border-emerald-100";
+        const bad = "bg-rose-50 text-rose-800 border border-rose-100";
+        const cls = tone === "bad" ? bad : ok;
+
+        return (
+          <div className="flex flex-wrap">
+            {items.map((it) => (
+              <span key={it} className={base + " " + cls}>
+                {it}
+              </span>
+            ))}
+          </div>
+        );
+      }
+
+      // --- Componente principal App ---
+
+      function App() {
+        const [catalog, setCatalog] = useState([]);
+        const [catalogStatus, setCatalogStatus] = useState("loading"); // loading | ready | error
+        const [catalogError, setCatalogError] = useState("");
+
+        const [selected1, setSelected1] = useState(null);
+        const [selected2, setSelected2] = useState(null);
+        const [asin1, setAsin1] = useState("");
+        const [asin2, setAsin2] = useState("");
+
+        const [metricsStatus, setMetricsStatus] = useState("idle"); // idle | loading | success | error
+        const [metricsError, setMetricsError] = useState("");
+        const [metricsData, setMetricsData] = useState(null);
+
+        const [narrativeStatus, setNarrativeStatus] = useState("idle"); // idle | loading | success | error
+        const [narrativeError, setNarrativeError] = useState("");
+        const [narrativeText, setNarrativeText] = useState("");
+
+        // Cargar índice desde la función Netlify
+        useEffect(() => {
+          async function loadIndex() {
+            try {
+              setCatalogStatus("loading");
+              const res = await fetch("/.netlify/functions/verifymyth", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ mode: "index" }),
+              });
+              const data = await res.json();
+              if (!data.success) {
+                throw new Error(data.error || "Error al cargar el índice.");
+              }
+              setCatalog(data.products || []);
+              setCatalogStatus("ready");
+            } catch (err) {
+              console.error(err);
+              setCatalogStatus("error");
+              setCatalogError(err.message);
             }
           }
-        }
-      }
-    }
-  </script>
-</head>
-<body class="min-h-screen bg-lama-bg font-sans text-slate-900 selection:bg-amber-200/70 selection:text-slate-900 pb-20">
-  <!-- HEADER -->
-  <header class="w-full py-3 px-6 flex justify-between items-center bg-white/80 backdrop-blur border-b border-amber-100 sticky top-0 z-50">
-    <div class="flex items-center gap-2">
-      <div class="w-9 h-9 bg-lama-accent rounded-xl flex items-center justify-center text-lama-dark font-black text-xl shadow-sm">
-        L
-      </div>
-      <div class="flex flex-col leading-tight">
-        <span class="text-base font-semibold text-lama-dark tracking-tight">
-          TheLamaNest
-        </span>
-        <span class="text-[11px] uppercase tracking-[0.16em] text-slate-400 font-semibold">
-          Comparador Lama
-        </span>
-      </div>
-    </div>
-    <nav class="hidden md:flex items-center gap-3 text-xs font-medium text-slate-500">
-      <span class="px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100 flex items-center gap-1">
-        <span class="text-[13px]">✨</span> IA sobre reseñas reales
-      </span>
-    </nav>
-  </header>
+          loadIndex();
+        }, []);
 
-  <!-- HERO / SELECTORES -->
-  <main class="max-w-6xl mx-auto px-5 pt-14 md:pt-20 pb-10">
-    <section class="max-w-4xl mx-auto mb-12">
-      <div class="absolute inset-x-0 -top-24 h-64 bg-gradient-to-b from-amber-100/70 to-transparent pointer-events-none -z-10"></div>
-      <div class="text-center mb-8">
-        <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-lama-dark mb-4">
-          Compara <span class="text-lama-accent">cara a cara</span> dos productos Lama.
-        </h1>
-        <p class="text-base md:text-lg text-slate-600 max-w-2xl mx-auto">
-          Elige dos productos que ya tengan meta-review en TheLamaNest y deja que la IA te ayude a decidir cuál encaja mejor contigo.
-        </p>
-      </div>
+        const canCompare =
+          selected1 &&
+          selected2 &&
+          selected1.asin &&
+          selected2.asin &&
+          selected1.asin !== selected2.asin;
 
-      <!-- SELECTOR DOBLE -->
-      <div class="bg-white/90 backdrop-blur p-4 md:p-5 rounded-2xl shadow-[0_18px_40px_rgba(15,23,42,0.10)] border border-amber-100">
-        <div class="grid md:grid-cols-2 gap-4">
-          <!-- PRODUCTO 1 -->
-          <div class="border border-amber-100 rounded-xl p-3 md:p-4 bg-amber-50/40">
-            <h2 class="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
-              <span class="w-5 h-5 rounded-full bg-lama-accent text-xs flex items-center justify-center text-lama-dark font-bold">1</span>
-              Producto 1
-            </h2>
+        const handleCompareClick = async () => {
+          if (!canCompare) return;
+          setMetricsStatus("loading");
+          setMetricsError("");
+          setMetricsData(null);
+          setNarrativeStatus("idle");
+          setNarrativeText("");
+          setNarrativeError("");
 
-            <label class="block text-[11px] text-slate-500 mb-1">Busca por nombre, marca o modelo</label>
-            <div class="relative mb-3">
-              <span class="absolute left-3 top-2.5 text-slate-300 text-sm">🔍</span>
-              <input
-                id="searchA"
-                type="text"
-                placeholder="Ej: Oral-B Pro 3..."
-                class="w-full pl-8 pr-3 py-2.5 bg-white rounded-lg border border-transparent focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none text-sm"
-                autocomplete="off"
-              />
-              <div id="suggestionsA"
-                class="absolute mt-1 left-0 right-0 bg-white rounded-lg border border-slate-200 shadow-lg max-h-56 overflow-auto hidden z-20 text-sm">
-              </div>
-            </div>
+          try {
+            const res = await fetch("/.netlify/functions/verifymyth", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                mode: "metrics",
+                asinA: selected1.asin,
+                asinB: selected2.asin,
+              }),
+            });
+            const data = await res.json();
+            if (!data.success) {
+              throw new Error(data.error || "Error en comparativa de datos.");
+            }
+            const [pA, pB] = data.products || [];
+            setMetricsData({
+              productA: pA,
+              productB: pB,
+              analysis: data.analysis || "",
+            });
+            setMetricsStatus("success");
+          } catch (err) {
+            console.error(err);
+            setMetricsStatus("error");
+            setMetricsError(err.message);
+          }
+        };
 
-            <div class="mb-3">
-              <label class="block text-[11px] text-slate-500 mb-1">
-                ¿Vienes de Amazon o ya conoces el código?
-              </label>
-              <div class="flex gap-2">
-                <input
-                  id="asinA"
-                  type="text"
-                  placeholder="Pega aquí el ASIN (opcional)"
-                  class="flex-1 px-3 py-2 bg-white rounded-lg border border-transparent focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none text-xs md:text-sm"
-                />
-                <button
-                  id="asinABtn"
-                  type="button"
-                  class="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-800">
-                  Usar ASIN
-                </button>
-              </div>
-            </div>
+        const handleNarrativeClick = async () => {
+          if (!canCompare || metricsStatus !== "success") return;
+          setNarrativeStatus("loading");
+          setNarrativeError("");
+          setNarrativeText("");
 
-            <div id="selectedA" class="text-xs text-slate-500">
-              <span class="italic">Todavía no has seleccionado ningún producto.</span>
-            </div>
+          try {
+            const res = await fetch("/.netlify/functions/verifymyth", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                mode: "narrative",
+                asinA: selected1.asin,
+                asinB: selected2.asin,
+              }),
+            });
+            const data = await res.json();
+            if (!data.success) {
+              throw new Error(
+                data.error || "Error generando la opinión de la IA."
+              );
+            }
+            setNarrativeText(data.text || "");
+            setNarrativeStatus("success");
+          } catch (err) {
+            console.error(err);
+            setNarrativeStatus("error");
+            setNarrativeError(err.message);
+          }
+        };
+
+        return (
+          <div className="min-h-screen">
+            <main className="max-w-5xl mx-auto px-4 py-10 md:py-16">
+              {/* Cabecera */}
+              <header className="mb-10 md:mb-12 text-center">
+                <div className="flex justify-center mb-4">
+                  <LlamaBadge />
+                </div>
+                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 mb-2">
+                  El comparador IA de TheLamaNest
+                </h1>
+                <p className="text-sm md:text-base text-slate-600 max-w-2xl mx-auto">
+                  Elige dos productos que ya tengan meta-review en TheLamaNest,
+                  compáralos con datos reales de reseñas y deja que el Lama
+                  sabio te ayude a decidir cuál encaja mejor contigo.
+                </p>
+
+                {catalogStatus === "loading" && (
+                  <p className="mt-3 text-xs text-slate-500">
+                    Cargando índice Lama...
+                  </p>
+                )}
+                {catalogStatus === "error" && (
+                  <p className="mt-3 text-xs text-red-600">
+                    No se pudo cargar el índice: {catalogError}
+                  </p>
+                )}
+              </header>
+
+              {/* Selección de productos */}
+              <section className="bg-amber-50/70 border border-amber-200 rounded-3xl p-4 md:p-6 mb-8">
+                <div className="grid md:grid-cols-2 gap-4 md:gap-6">
+                  <ProductSelector
+                    slot={1}
+                    catalog={catalog}
+                    selectedProduct={selected1}
+                    asinValue={asin1}
+                    onChangeAsin={setAsin1}
+                    onSelectProduct={setSelected1}
+                  />
+                  <ProductSelector
+                    slot={2}
+                    catalog={catalog}
+                    selectedProduct={selected2}
+                    asinValue={asin2}
+                    onChangeAsin={setAsin2}
+                    onSelectProduct={setSelected2}
+                  />
+                </div>
+
+                <p className="mt-4 text-xs text-slate-500 text-center">
+                  Selecciona dos productos distintos para activar los botones de
+                  IA.
+                </p>
+
+                {/* Botones IA */}
+                <div className="mt-5 flex flex-col md:flex-row gap-3 justify-center">
+                  <button
+                    type="button"
+                    onClick={handleCompareClick}
+                    disabled={!canCompare || metricsStatus === "loading"}
+                    className={
+                      "px-5 py-2.5 rounded-full text-sm font-semibold flex items-center justify-center gap-2 " +
+                      (canCompare
+                        ? "bg-slate-900 text-white hover:bg-black"
+                        : "bg-slate-200 text-slate-500 cursor-not-allowed")
+                    }
+                  >
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/10 border border-white/40 text-[11px]">
+                      1
+                    </span>
+                    {metricsStatus === "loading"
+                      ? "Comparando datos..."
+                      : "Comparativa de datos (IA)"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleNarrativeClick}
+                    disabled={
+                      !canCompare ||
+                      metricsStatus !== "success" ||
+                      narrativeStatus === "loading"
+                    }
+                    className={
+                      "px-5 py-2.5 rounded-full text-sm font-semibold flex items-center justify-center gap-2 " +
+                      (canCompare && metricsStatus === "success"
+                        ? "bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200"
+                        : "bg-slate-200 text-slate-500 cursor-not-allowed")
+                    }
+                  >
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/40 border border-white/60 text-[11px]">
+                      2
+                    </span>
+                    {narrativeStatus === "loading"
+                      ? "Pidiendo opinión al Lama..."
+                      : "Opinión final (IA)"}
+                  </button>
+                </div>
+              </section>
+
+              {/* Resultados comparativa de datos */}
+              <section className="space-y-6">
+                {metricsStatus === "loading" && (
+                  <div className="bg-white border border-slate-200 rounded-2xl p-6 text-sm text-slate-600 text-center fade-in">
+                    Analizando reseñas, distribución de estrellas y probabilidad
+                    de chasco...
+                  </div>
+                )}
+
+                {metricsStatus === "error" && (
+                  <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-sm text-red-700 fade-in">
+                    Ha habido un problema con la comparativa de datos:{" "}
+                    {metricsError}
+                  </div>
+                )}
+
+                {metricsStatus === "success" && metricsData && (
+                  <>
+                    {metricsData.analysis && (
+                      <div className="bg-white border border-slate-200 rounded-2xl p-6 text-sm text-slate-700 fade-in">
+                        <h2 className="font-semibold text-slate-900 mb-2">
+                          Resumen rápido de la IA
+                        </h2>
+                        <p className="whitespace-pre-line">
+                          {metricsData.analysis}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="grid md:grid-cols-2 gap-4 fade-in">
+                      {[metricsData.productA, metricsData.productB].map(
+                        (p, idx) => (
+                          <div
+                            key={p.asin}
+                            className="bg-white border border-slate-200 rounded-2xl p-5 text-sm"
+                          >
+                            <div className="flex justify-between items-start mb-3">
+                              <div className="text-xs uppercase font-semibold text-slate-500 tracking-wide">
+                                {idx === 0
+                                  ? "Producto A"
+                                  : "Producto B"}
+                              </div>
+                              <div className="text-xs text-slate-500">
+                                {p.market} · {p.categoria_inferida}
+                              </div>
+                            </div>
+                            <div className="font-semibold text-slate-900 mb-1">
+                              {p.nombre_producto}
+                            </div>
+                            <div className="text-xs text-slate-500 mb-2">
+                              ASIN: {p.asin}
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-slate-700 mb-2">
+                              <span className="font-semibold">
+                                {p.mean_stars?.toFixed
+                                  ? p.mean_stars.toFixed(1)
+                                  : p.mean_stars}{" "}
+                                ★
+                              </span>
+                              <span className="text-slate-500">
+                                {p.n_reviews &&
+                                  `${p.n_reviews.toLocaleString(
+                                    "es-ES"
+                                  )} reseñas`}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 mb-2">
+                              {p.lama_lb95 != null &&
+                                p.lama_ub95 != null && (
+                                  <span>
+                                    IC95% Lama:{" "}
+                                    {p.lama_lb95.toFixed(2)}–{" "}
+                                    {p.lama_ub95.toFixed(2)}
+                                  </span>
+                                )}
+                              {p.prob_chasco != null && (
+                                <span>
+                                  · Prob. chasco:{" "}
+                                  {(p.prob_chasco * 100).toFixed(0)}%
+                                </span>
+                              )}
+                              {p.fecha_ultima_review && (
+                                <span>
+                                  · Última reseña:{" "}
+                                  {p.fecha_ultima_review}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="mt-3">
+                              <h3 className="text-xs font-semibold text-slate-800 mb-1">
+                                Distribución de estrellas
+                              </h3>
+                              <StarsRow product={p} />
+                            </div>
+
+                            <div className="mt-3">
+                              <h3 className="text-xs font-semibold text-emerald-800 mb-1">
+                                Lo que más suele gustar
+                              </h3>
+                              <BulletList
+                                items={p.top_pros}
+                                tone="good"
+                              />
+                            </div>
+
+                            <div className="mt-3">
+                              <h3 className="text-xs font-semibold text-rose-800 mb-1">
+                                Lo que suele dar problemas
+                              </h3>
+                              <BulletList
+                                items={p.top_contras}
+                                tone="bad"
+                              />
+                            </div>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {/* Opinión final IA sobre blogs */}
+                {narrativeStatus === "loading" && (
+                  <div className="bg-white border border-slate-200 rounded-2xl p-6 text-sm text-slate-700 text-center fade-in">
+                    Leyendo las meta-reviews y preparando una opinión final...
+                  </div>
+                )}
+
+                {narrativeStatus === "error" && (
+                  <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-sm text-red-700 fade-in">
+                    Ha habido un problema con la opinión final de la IA:{" "}
+                    {narrativeError}
+                  </div>
+                )}
+
+                {narrativeStatus === "success" && narrativeText && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-sm text-slate-800 fade-in">
+                    <h2 className="font-semibold text-slate-900 mb-2">
+                      Opinión final de la IA Lama
+                    </h2>
+                    <p className="whitespace-pre-line">{narrativeText}</p>
+                  </div>
+                )}
+              </section>
+            </main>
           </div>
-
-          <!-- PRODUCTO 2 -->
-          <div class="border border-amber-100 rounded-xl p-3 md:p-4 bg-amber-50/40">
-            <h2 class="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
-              <span class="w-5 h-5 rounded-full bg-lama-accent text-xs flex items-center justify-center text-lama-dark font-bold">2</span>
-              Producto 2
-            </h2>
-
-            <label class="block text-[11px] text-slate-500 mb-1">Busca por nombre, marca o modelo</label>
-            <div class="relative mb-3">
-              <span class="absolute left-3 top-2.5 text-slate-300 text-sm">🔍</span>
-              <input
-                id="searchB"
-                type="text"
-                placeholder="Ej: Philips Sonicare..."
-                class="w-full pl-8 pr-3 py-2.5 bg-white rounded-lg border border-transparent focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none text-sm"
-                autocomplete="off"
-              />
-              <div id="suggestionsB"
-                class="absolute mt-1 left-0 right-0 bg-white rounded-lg border border-slate-200 shadow-lg max-h-56 overflow-auto hidden z-20 text-sm">
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label class="block text-[11px] text-slate-500 mb-1">
-                ¿Vienes de Amazon o ya conoces el código?
-              </label>
-              <div class="flex gap-2">
-                <input
-                  id="asinB"
-                  type="text"
-                  placeholder="Pega aquí el ASIN (opcional)"
-                  class="flex-1 px-3 py-2 bg-white rounded-lg border border-transparent focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none text-xs md:text-sm"
-                />
-                <button
-                  id="asinBBtn"
-                  type="button"
-                  class="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-800">
-                  Usar ASIN
-                </button>
-              </div>
-            </div>
-
-            <div id="selectedB" class="text-xs text-slate-500">
-              <span class="italic">Todavía no has seleccionado ningún producto.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- BOTONES IA -->
-        <div class="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <p id="compareHint" class="text-[11px] text-slate-500">
-            Selecciona dos productos distintos para activar los botones de IA.
-          </p>
-          <div class="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-            <button
-              id="compareMetricsBtn"
-              type="button"
-              disabled
-              class="bg-lama-dark hover:bg-black text-white font-semibold py-2.5 px-5 rounded-xl transition-colors w-full md:w-auto flex items-center justify-center gap-2 text-xs md:text-sm disabled:opacity-60 disabled:cursor-not-allowed">
-              <span>1️⃣ Comparativa de datos (IA)</span>
-            </button>
-            <button
-              id="compareNarrativeBtn"
-              type="button"
-              disabled
-              class="bg-white hover:bg-slate-50 text-slate-900 font-semibold py-2.5 px-5 rounded-xl border border-slate-200 transition-colors w-full md:w-auto flex items-center justify-center gap-2 text-xs md:text-sm disabled:opacity-40 disabled:cursor-not-allowed">
-              <span>2️⃣ Opinión final (IA)</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- RESULTADOS -->
-    <section id="resultsSection" class="min-h-[280px]">
-      <!-- Estado inicial -->
-      <div id="initialState" class="max-w-xl mx-auto text-center py-10 text-sm text-slate-600">
-        <div class="w-16 h-16 rounded-2xl bg-lama-soft border border-amber-200 mx-auto mb-4 flex items-center justify-center">
-          <span class="text-2xl">🦙</span>
-        </div>
-        <h3 class="text-lg font-semibold text-slate-900 mb-2">
-          Elige dos productos Lama para ver la comparativa.
-        </h3>
-        <p>
-          Busca por nombre o pega el ASIN de dos productos que ya tengan meta-review en TheLamaNest y luego pulsa “Comparativa de datos (IA)”.
-        </p>
-      </div>
-
-      <!-- Loading general -->
-      <div id="loadingState" class="hidden py-10">
-        <div class="text-center mb-6">
-          <h3 class="text-lg font-semibold text-slate-900 mb-1" id="loadingTitle">
-            Preparando la comparativa…
-          </h3>
-          <p class="text-sm text-slate-500" id="loadingSubtitle">
-            La IA está leyendo tus datos Lama para construir el cara a cara.
-          </p>
-        </div>
-        <div class="grid md:grid-cols-2 gap-5">
-          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 animate-pulse space-y-3">
-            <div class="h-3 w-20 bg-slate-200 rounded-full"></div>
-            <div class="h-4 w-full bg-slate-200 rounded-lg"></div>
-            <div class="h-4 w-2/3 bg-slate-200 rounded-lg"></div>
-            <div class="h-5 w-24 bg-slate-200 rounded-full"></div>
-          </div>
-          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 animate-pulse space-y-3">
-            <div class="h-3 w-20 bg-slate-200 rounded-full"></div>
-            <div class="h-4 w-full bg-slate-200 rounded-lg"></div>
-            <div class="h-4 w-2/3 bg-slate-200 rounded-lg"></div>
-            <div class="h-5 w-24 bg-slate-200 rounded-full"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Resultados comparativa -->
-      <div id="comparisonContent" class="hidden">
-        <!-- Cards -->
-        <div class="mb-10">
-          <h2 class="text-xl md:text-2xl font-bold text-slate-900 mb-4">
-            Cara a cara entre tus dos productos
-          </h2>
-          <div id="cardsContainer" class="grid md:grid-cols-2 gap-6">
-          </div>
-        </div>
-
-        <!-- Tabla comparativa -->
-        <div class="mb-10">
-          <h3 class="text-lg font-bold text-slate-900 mb-3">
-            Comparativa rápida
-          </h3>
-          <div class="overflow-hidden rounded-2xl border border-slate-200 shadow-sm bg-white">
-            <div class="overflow-x-auto">
-              <table class="w-full text-xs text-left" id="comparisonTable">
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- Metodología -->
-        <section class="mt-8 bg-amber-50/70 rounded-2xl p-6 md:p-8 border border-amber-100">
-          <h3 class="text-lg md:text-xl font-bold text-slate-900 mb-5 flex items-center gap-2">
-            <span class="text-amber-500 text-xl">📊</span>
-            ¿Qué tiene en cuenta el Comparador Lama?
-          </h3>
-          <div class="grid md:grid-cols-3 gap-5 text-sm text-slate-700">
-            <div>
-              <h4 class="font-semibold text-slate-900 mb-1.5">Calidad media real</h4>
-              <p>No solo miramos la media de estrellas: el tamaño de muestra, el intervalo de confianza y el reparto de 1–2 estrellas importan.</p>
-            </div>
-            <div>
-              <h4 class="font-semibold text-slate-900 mb-1.5">Probabilidad de chasco</h4>
-              <p>Si hay demasiada gente diciendo que “se rompe pronto” o “no hace lo que promete”, el riesgo sube y el comparador te lo marca claro.</p>
-            </div>
-            <div>
-              <h4 class="font-semibold text-slate-900 mb-1.5">Patrones en pros y contras</h4>
-              <p>La IA resume qué se repite de verdad en las reseñas: qué gusta más y qué falla más, para que no compres solo por una foto bonita.</p>
-            </div>
-          </div>
-        </section>
-
-        <!-- Opinión narrativa IA -->
-        <section class="mt-10" id="narrativeSection">
-          <h3 class="text-lg md:text-xl font-bold text-slate-900 mb-3">
-            Opinión final de la IA Lama
-          </h3>
-          <p class="text-xs text-slate-500 mb-3">
-            Este texto se basa en la comparativa de los blogs/meta-reviews. El objetivo es ayudarte a tomar una decisión clara.
-          </p>
-
-          <!-- Loading narrativo -->
-          <div id="narrativeLoading" class="hidden bg-white border border-slate-200 rounded-2xl p-4 text-sm text-slate-600">
-            <div class="animate-pulse flex flex-col gap-2">
-              <div class="h-3 w-24 bg-slate-200 rounded-full"></div>
-              <div class="h-3 w-full bg-slate-200 rounded-full"></div>
-              <div class="h-3 w-4/5 bg-slate-200 rounded-full"></div>
-              <div class="h-3 w-2/3 bg-slate-200 rounded-full"></div>
-            </div>
-          </div>
-
-          <!-- Contenido narrativo -->
-          <div id="narrativeContent" class="bg-white border border-slate-200 rounded-2xl p-4 text-sm text-slate-700 hidden">
-          </div>
-
-          <!-- Mensaje vacío -->
-          <div id="narrativeEmpty" class="text-sm text-slate-500">
-            Aún no has pedido la opinión final de la IA. Una vez tengas la comparativa de datos, pulsa “Opinión final (IA)” para ver una recomendación corta y persuasiva.
-          </div>
-        </section>
-      </div>
-    </section>
-  </main>
-
-  <!-- JS -->
-  <script>
-    // --- MOCK CATALOG LAMA ---
-    // Sustituye este array por un fetch a tu lama_index.json o lama_catalog.json cuando lo tengas
-    const CATALOG = [
-      {
-        asin: "B0B4SG34QP",
-        nombre_producto: "Oral-B Pro 3 3000 Sensi Ultrathin",
-        market: "ES",
-        categoria_inferida: "cepillos_electricos",
-        n_reviews: 1240,
-        mean_stars: 4.6,
-        stars_pct: { "5": 0.75, "4": 0.15, "3": 0.05, "2": 0.02, "1": 0.03 },
-        lama_lb95: 4.53,
-        lama_ub95: 4.69,
-        prob_chasco: 0.04,
-        fecha_ultima_review: "2025-10-26",
-        top_pros: ["limpieza", "encías sensibles", "sensor presión", "batería"],
-        top_contras: ["precio recambios", "ruido", "vibración"],
-        tags_tematica: ["cepillo_electrico", "encías_sensibles", "sensor_presion", "uso_diario"]
-      },
-      {
-        asin: "B07B756S34",
-        nombre_producto: "Philips Sonicare ProtectiveClean 4300",
-        market: "ES",
-        categoria_inferida: "cepillos_electricos",
-        n_reviews: 850,
-        mean_stars: 4.4,
-        stars_pct: { "5": 0.68, "4": 0.20, "3": 0.07, "2": 0.02, "1": 0.03 },
-        lama_lb95: 4.31,
-        lama_ub95: 4.49,
-        prob_chasco: 0.09,
-        fecha_ultima_review: "2025-10-20",
-        top_pros: ["tecnología sónica", "sensación de limpieza", "temporizador"],
-        top_contras: ["recambios caros", "ruido agudo", "adaptación inicial"],
-        tags_tematica: ["cepillo_electrico", "tecnologia_sonica", "blanqueamiento", "viaje"]
-      },
-      {
-        asin: "B09C3X43L1",
-        nombre_producto: "Oclean X Pro Elite",
-        market: "ES",
-        categoria_inferida: "cepillos_electricos",
-        n_reviews: 320,
-        mean_stars: 4.2,
-        stars_pct: { "5": 0.60, "4": 0.10, "3": 0.10, "2": 0.05, "1": 0.15 },
-        lama_lb95: 4.02,
-        lama_ub95: 4.37,
-        prob_chasco: 0.15,
-        fecha_ultima_review: "2025-09-30",
-        top_pros: ["silencioso", "pantalla", "app"],
-        top_contras: ["app inestable", "táctil poco preciso", "recambios"],
-        tags_tematica: ["cepillo_electrico", "pantalla", "app", "gadget_tech"]
-      }
-    ];
-
-    // --- STATE ---
-    let selectedA = null;
-    let selectedB = null;
-    let metricsLoaded = false;
-
-    const searchA = document.getElementById('searchA');
-    const searchB = document.getElementById('searchB');
-    const suggestionsA = document.getElementById('suggestionsA');
-    const suggestionsB = document.getElementById('suggestionsB');
-    const asinAInput = document.getElementById('asinA');
-    const asinBInput = document.getElementById('asinB');
-    const asinABtn = document.getElementById('asinABtn');
-    const asinBBtn = document.getElementById('asinBBtn');
-    const selectedADiv = document.getElementById('selectedA');
-    const selectedBDiv = document.getElementById('selectedB');
-
-    const compareMetricsBtn = document.getElementById('compareMetricsBtn');
-    const compareNarrativeBtn = document.getElementById('compareNarrativeBtn');
-    const compareHint = document.getElementById('compareHint');
-
-    const initialState = document.getElementById('initialState');
-    const loadingState = document.getElementById('loadingState');
-    const loadingTitle = document.getElementById('loadingTitle');
-    const loadingSubtitle = document.getElementById('loadingSubtitle');
-    const comparisonContent = document.getElementById('comparisonContent');
-    const cardsContainer = document.getElementById('cardsContainer');
-    const comparisonTable = document.getElementById('comparisonTable');
-
-    const narrativeLoading = document.getElementById('narrativeLoading');
-    const narrativeContent = document.getElementById('narrativeContent');
-    const narrativeEmpty = document.getElementById('narrativeEmpty');
-
-    // --- HELPERS UI ---
-    function showInitial() {
-      initialState.classList.remove('hidden');
-      loadingState.classList.add('hidden');
-      comparisonContent.classList.add('hidden');
-    }
-
-    function showLoading(mode) {
-      initialState.classList.add('hidden');
-      if (mode === 'metrics') {
-        loadingTitle.textContent = 'Preparando la comparativa…';
-        loadingSubtitle.textContent = 'La IA está leyendo tus datos Lama para construir el cara a cara.';
-        loadingState.classList.remove('hidden');
-        comparisonContent.classList.add('hidden');
-      }
-    }
-
-    function showComparison() {
-      initialState.classList.add('hidden');
-      loadingState.classList.add('hidden');
-      comparisonContent.classList.remove('hidden');
-    }
-
-    function getFilteredCatalog(term) {
-      const lower = term.toLowerCase();
-      return CATALOG.filter(p => {
-        if (!lower) return true;
-        const text = (p.nombre_producto + ' ' + p.asin).toLowerCase();
-        return text.includes(lower);
-      }).slice(0, 10);
-    }
-
-    function renderSuggestions(list, container, which) {
-      container.innerHTML = '';
-      if (!list.length) {
-        container.classList.add('hidden');
-        return;
-      }
-      list.forEach(p => {
-        const item = document.createElement('button');
-        item.type = 'button';
-        item.className = 'w-full text-left px-3 py-2 hover:bg-amber-50 text-xs border-b last:border-b-0 border-slate-100 flex flex-col';
-        item.innerHTML = `
-          <span class="font-semibold text-slate-900">${p.nombre_producto}</span>
-          <span class="text-[11px] text-slate-400">ASIN: ${p.asin}</span>
-        `;
-        item.addEventListener('click', () => {
-          selectProduct(p, which);
-          container.classList.add('hidden');
-        });
-        container.appendChild(item);
-      });
-      container.classList.remove('hidden');
-    }
-
-    function selectProduct(p, which) {
-      if (which === 'A') {
-        if (selectedB && selectedB.asin === p.asin) {
-          alert('Para comparar necesitas dos productos distintos.');
-          return;
-        }
-        selectedA = p;
-        searchA.value = p.nombre_producto;
-        asinAInput.value = p.asin;
-        selectedADiv.innerHTML = renderSelectedCardHTML(p);
-      } else {
-        if (selectedA && selectedA.asin === p.asin) {
-          alert('Para comparar necesitas dos productos distintos.');
-          return;
-        }
-        selectedB = p;
-        searchB.value = p.nombre_producto;
-        asinBInput.value = p.asin;
-        selectedBDiv.innerHTML = renderSelectedCardHTML(p);
-      }
-      metricsLoaded = false;
-      narrativeContent.classList.add('hidden');
-      narrativeEmpty.classList.remove('hidden');
-      updateCompareButtons();
-    }
-
-    function renderSelectedCardHTML(p) {
-      return `
-        <div class="mt-1 p-2.5 bg-white rounded-lg border border-amber-100 text-[11px] flex flex-col gap-1">
-          <div class="flex justify-between items-center">
-            <span class="font-semibold text-slate-900">${p.nombre_producto}</span>
-            <span class="text-[10px] text-slate-400">ASIN: ${p.asin}</span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-[11px] text-slate-500">
-              ${(p.mean_stars ?? 0).toFixed(1)} ★ (${p.n_reviews ?? 0})
-            </span>
-            <span class="text-[10px] text-slate-400 uppercase tracking-[0.14em]">
-              ${(p.market || '').toUpperCase()}
-            </span>
-          </div>
-          <div class="flex flex-wrap gap-1 mt-1">
-            ${(p.tags_tematica || []).slice(0,3).map(tag => `
-              <span class="px-2 py-0.5 bg-amber-50 text-amber-800 rounded-full border border-amber-100">
-                #${tag}
-              </span>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    function updateCompareButtons() {
-      const canCompare = selectedA && selectedB && selectedA.asin !== selectedB.asin;
-      compareMetricsBtn.disabled = !canCompare;
-      compareNarrativeBtn.disabled = !canCompare || !metricsLoaded;
-
-      if (!canCompare) {
-        compareHint.textContent = 'Selecciona dos productos distintos para activar los botones de IA.';
-      } else if (!metricsLoaded) {
-        compareHint.textContent = 'Ya puedes lanzar la comparativa de datos (IA). La opinión final se activará después.';
-      } else {
-        compareHint.textContent = 'Puedes volver a lanzar la comparativa o pedir otra opinión final cuando quieras.';
-      }
-    }
-
-    function formatDateISOToES(dateStr) {
-      if (!dateStr) return '';
-      const parts = dateStr.split('-');
-      if (parts.length !== 3) return dateStr;
-      const [y, m, d] = parts;
-      return `${d}/${m}/${y}`;
-    }
-
-    function probChascoBadge(prob) {
-      if (prob > 0.15) return 'Alto riesgo de chasco';
-      if (prob > 0.08) return 'Riesgo moderado de chasco';
-      return 'Baja probabilidad de chasco';
-    }
-
-    function renderCardsFromAPI(products) {
-      cardsContainer.innerHTML = '';
-      products.forEach(p => {
-        const card = document.createElement('article');
-        card.className = 'relative flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm p-4 md:p-5';
-
-        const market = p.market ? String(p.market).toUpperCase() : '';
-        const lb = typeof p.lama_lb95 === 'number' ? p.lama_lb95.toFixed(2) : '-';
-        const ub = typeof p.lama_ub95 === 'number' ? p.lama_ub95.toFixed(2) : '-';
-        const prob = typeof p.prob_chasco === 'number' ? p.prob_chasco : 0;
-        const lastDate = formatDateISOToES(p.fecha_ultima_review);
-
-        card.innerHTML = `
-          <div class="flex justify-between items-start gap-2 mb-3">
-            <div>
-              <div class="flex items-center gap-2 mb-1">
-                <span class="text-[11px] text-slate-400 uppercase tracking-[0.14em]">
-                  ${(p.categoria_inferida || '').replace('_', ' ')}
-                </span>
-                ${market ? `
-                  <span class="px-2 py-0.5 rounded-full bg-slate-900 text-amber-200 text-[10px] uppercase tracking-[0.14em]">
-                    ${market}
-                  </span>` : ''
-                }
-              </div>
-              <h3 class="text-sm md:text-base font-bold text-slate-900 leading-snug">
-                ${p.nombre_producto}
-              </h3>
-            </div>
-            <div class="flex flex-col items-end gap-1">
-              <div class="flex items-center gap-1.5">
-                <span class="text-amber-400">★</span>
-                <span class="font-semibold text-slate-900 text-sm">
-                  ${(p.mean_stars ?? 0).toFixed(1)}
-                </span>
-                <span class="text-[11px] text-slate-400">
-                  (${p.n_reviews ?? 0})
-                </span>
-              </div>
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-800 rounded-full border border-amber-100 text-[10px]">
-                ${probChascoBadge(prob)}
-              </span>
-              <span class="text-[10px] text-slate-400">
-                IC95%: ${lb}–${ub}
-              </span>
-            </div>
-          </div>
-
-          <div class="flex flex-wrap gap-1 mb-3">
-            ${(p.tags_tematica || []).slice(0,4).map(tag => `
-              <span class="px-2 py-0.5 bg-amber-50 text-amber-800 text-[10px] rounded-full border border-amber-100">
-                #${tag}
-              </span>
-            `).join('')}
-          </div>
-
-          <div class="grid grid-cols-2 gap-3 mt-1">
-            <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5">
-              <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 mb-1">
-                Top pros (más mencionados)
-              </p>
-              <ul class="text-[11px] text-slate-700 space-y-0.5">
-                ${(p.top_pros || []).slice(0,4).map(pro => `
-                  <li>• ${pro}</li>
-                `).join('') || '<li class="text-slate-400">Sin datos</li>'}
-              </ul>
-            </div>
-            <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5">
-              <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 mb-1">
-                Top contras (alertas)
-              </p>
-              <ul class="text-[11px] text-slate-700 space-y-0.5">
-                ${(p.top_contras || []).slice(0,4).map(con => `
-                  <li>• ${con}</li>
-                `).join('') || '<li class="text-slate-400">Sin datos</li>'}
-              </ul>
-            </div>
-          </div>
-
-          <div class="mt-3 flex justify-between items-center text-[11px] text-slate-500">
-            <span>
-              Última review: ${lastDate || '–'}
-            </span>
-            <span class="text-slate-400">
-              ASIN: ${p.asin}
-            </span>
-          </div>
-        `;
-        cardsContainer.appendChild(card);
-      });
-    }
-
-    function renderTableFromAPI(products) {
-      const [a, b] = products;
-
-      const a_lb = typeof a.lama_lb95 === 'number' ? a.lama_lb95.toFixed(2) : '-';
-      const a_ub = typeof a.lama_ub95 === 'number' ? a.lama_ub95.toFixed(2) : '-';
-      const b_lb = typeof b.lama_lb95 === 'number' ? b.lama_lb95.toFixed(2) : '-';
-      const b_ub = typeof b.lama_ub95 === 'number' ? b.lama_ub95.toFixed(2) : '-';
-
-      const a_prob = typeof a.prob_chasco === 'number' ? a.prob_chasco : 0;
-      const b_prob = typeof b.prob_chasco === 'number' ? b.prob_chasco : 0;
-
-      const a_stars = a.stars_pct || {};
-      const b_stars = b.stars_pct || {};
-
-      function pct(starsObj, key) {
-        const v = starsObj[key];
-        if (typeof v !== 'number') return '–';
-        return `${(v * 100).toFixed(0)}%`;
+        );
       }
 
-      const a_date = formatDateISOToES(a.fecha_ultima_review);
-      const b_date = formatDateISOToES(b.fecha_ultima_review);
-
-      comparisonTable.innerHTML = `
-        <thead class="bg-slate-50 text-slate-500 font-semibold uppercase tracking-[0.12em]">
-          <tr>
-            <th class="px-5 py-3 min-w-[140px]">Criterio</th>
-            <th class="px-5 py-3 min-w-[200px]">${a.nombre_producto}</th>
-            <th class="px-5 py-3 min-w-[200px]">${b.nombre_producto}</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-          <tr>
-            <td class="px-5 py-3 font-semibold text-slate-900">Calidad media (estrellas)</td>
-            <td class="px-5 py-3 text-xs">
-              ${(a.mean_stars ?? 0).toFixed(1)} ★ (${a.n_reviews ?? 0})<br>
-              <span class="text-[11px] text-slate-500">IC95%: ${a_lb}–${a_ub}</span>
-            </td>
-            <td class="px-5 py-3 text-xs">
-              ${(b.mean_stars ?? 0).toFixed(1)} ★ (${b.n_reviews ?? 0})<br>
-              <span class="text-[11px] text-slate-500">IC95%: ${b_lb}–${b_ub}</span>
-            </td>
-          </tr>
-
-          <tr>
-            <td class="px-5 py-3 font-semibold text-slate-900">Probabilidad de chasco</td>
-            <td class="px-5 py-3 font-mono text-[11px]">
-              ${(a_prob * 100).toFixed(0)}%
-            </td>
-            <td class="px-5 py-3 font-mono text-[11px]">
-              ${(b_prob * 100).toFixed(0)}%
-            </td>
-          </tr>
-
-          <tr>
-            <td class="px-5 py-3 font-semibold text-slate-900 align-top">
-              Distribución de estrellas
-            </td>
-            <td class="px-5 py-3 align-top text-[11px] text-slate-700">
-              ⭐⭐⭐⭐⭐ ${pct(a_stars, '5')}<br>
-              ⭐⭐⭐⭐ ${pct(a_stars, '4')}<br>
-              ⭐⭐⭐ ${pct(a_stars, '3')}<br>
-              ⭐⭐ ${pct(a_stars, '2')}<br>
-              ⭐ ${pct(a_stars, '1')}
-            </td>
-            <td class="px-5 py-3 align-top text-[11px] text-slate-700">
-              ⭐⭐⭐⭐⭐ ${pct(b_stars, '5')}<br>
-              ⭐⭐⭐⭐ ${pct(b_stars, '4')}<br>
-              ⭐⭐⭐ ${pct(b_stars, '3')}<br>
-              ⭐⭐ ${pct(b_stars, '2')}<br>
-              ⭐ ${pct(b_stars, '1')}
-            </td>
-          </tr>
-
-          <tr>
-            <td class="px-5 py-3 font-semibold text-slate-900 align-top">
-              Top pros (más repetidos)
-            </td>
-            <td class="px-5 py-3 align-top text-[11px] text-slate-700">
-              <ul class="space-y-0.5">
-                ${(a.top_pros || []).slice(0,5).map(p => `<li>• ${p}</li>`).join('') || '<li class="text-slate-400">Sin datos</li>'}
-              </ul>
-            </td>
-            <td class="px-5 py-3 align-top text-[11px] text-slate-700">
-              <ul class="space-y-0.5">
-                ${(b.top_pros || []).slice(0,5).map(p => `<li>• ${p}</li>`).join('') || '<li class="text-slate-400">Sin datos</li>'}
-              </ul>
-            </td>
-          </tr>
-
-          <tr>
-            <td class="px-5 py-3 font-semibold text-slate-900 align-top">
-              Top contras (alertas)
-            </td>
-            <td class="px-5 py-3 align-top text-[11px] text-slate-700">
-              <ul class="space-y-0.5">
-                ${(a.top_contras || []).slice(0,5).map(c => `<li>• ${c}</li>`).join('') || '<li class="text-slate-400">Sin datos</li>'}
-              </ul>
-            </td>
-            <td class="px-5 py-3 align-top text-[11px] text-slate-700">
-              <ul class="space-y-0.5">
-                ${(b.top_contras || []).slice(0,5).map(c => `<li>• ${c}</li>`).join('') || '<li class="text-slate-400">Sin datos</li>'}
-              </ul>
-            </td>
-          </tr>
-
-          <tr>
-            <td class="px-5 py-3 font-semibold text-slate-900">
-              Última review analizada
-            </td>
-            <td class="px-5 py-3 text-[11px] text-slate-700">
-              ${a_date || '–'}
-            </td>
-            <td class="px-5 py-3 text-[11px] text-slate-700">
-              ${b_date || '–'}
-            </td>
-          </tr>
-        </tbody>
-      `;
-    }
-
-    // --- IA: llamadas a backend ---
-    async function launchMetricsComparison() {
-      if (!selectedA || !selectedB || selectedA.asin === selectedB.asin) return;
-
-      showLoading('metrics');
-      compareMetricsBtn.disabled = true;
-      compareNarrativeBtn.disabled = true;
-
-      try {
-        const response = await fetch('/.netlify/functions/verifymyth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            mode: 'metrics',
-            asinA: selectedA.asin,
-            asinB: selectedB.asin
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error('Error en la llamada a la API de comparativa de datos.');
-        }
-
-        const data = await response.json();
-
-        if (!data || !data.success || !Array.isArray(data.products) || data.products.length !== 2) {
-          throw new Error('Formato de respuesta inesperado en verifymyth (metrics).');
-        }
-
-        // Actualizamos con los objetos completos del índice
-        selectedA = data.products[0];
-        selectedB = data.products[1];
-
-        renderCardsFromAPI(data.products);
-        renderTableFromAPI(data.products);
-
-        metricsLoaded = true;
-        showComparison();
-        updateCompareButtons();
-      } catch (err) {
-        console.error(err);
-        alert('No se ha podido generar la comparativa de datos. Revisa la función verifymyth o inténtalo de nuevo.');
-        showInitial();
-      }
-    }
-
-    async function launchNarrativeComparison() {
-      if (!selectedA || !selectedB || selectedA.asin === selectedB.asin) return;
-      if (!metricsLoaded) {
-        alert('Primero genera la comparativa de datos (IA) y después pide la opinión final.');
-        return;
-      }
-
-      narrativeEmpty.classList.add('hidden');
-      narrativeContent.classList.add('hidden');
-      narrativeLoading.classList.remove('hidden');
-      compareNarrativeBtn.disabled = true;
-
-      try {
-        const response = await fetch('/.netlify/functions/verifymyth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            mode: 'narrative',
-            asinA: selectedA.asin,
-            asinB: selectedB.asin
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error('Error en la llamada a la API de opinión final.');
-        }
-
-        const data = await response.json();
-
-        if (!data || !data.success || typeof data.text !== 'string') {
-          throw new Error('Formato de respuesta inesperado en verifymyth (narrative).');
-        }
-
-        narrativeContent.textContent = data.text;
-        narrativeLoading.classList.add('hidden');
-        narrativeContent.classList.remove('hidden');
-      } catch (err) {
-        console.error(err);
-        alert('No se ha podido generar la opinión final. Revisa la función verifymyth o inténtalo de nuevo.');
-        narrativeLoading.classList.add('hidden');
-        narrativeEmpty.classList.remove('hidden');
-      } finally {
-        updateCompareButtons();
-      }
-    }
-
-    // --- EVENTOS AUTOCOMPLETE ---
-    searchA.addEventListener('input', () => {
-      const term = searchA.value.trim();
-      const list = getFilteredCatalog(term);
-      renderSuggestions(list, suggestionsA, 'A');
-    });
-
-    searchB.addEventListener('input', () => {
-      const term = searchB.value.trim();
-      const list = getFilteredCatalog(term);
-      renderSuggestions(list, suggestionsB, 'B');
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!suggestionsA.contains(e.target) && e.target !== searchA) {
-        suggestionsA.classList.add('hidden');
-      }
-      if (!suggestionsB.contains(e.target) && e.target !== searchB) {
-        suggestionsB.classList.add('hidden');
-      }
-    });
-
-    // --- EVENTOS ASIN ---
-    asinABtn.addEventListener('click', () => {
-      const asin = asinAInput.value.trim();
-      if (!asin) return;
-      const found = CATALOG.find(p => p.asin.toLowerCase() === asin.toLowerCase());
-      if (!found) {
-        alert('No encontramos ese ASIN en el catálogo Lama mock. Asegúrate de que existe en tu JSON.');
-        return;
-      }
-      selectProduct(found, 'A');
-    });
-
-    asinBBtn.addEventListener('click', () => {
-      const asin = asinBInput.value.trim();
-      if (!asin) return;
-      const found = CATALOG.find(p => p.asin.toLowerCase() === asin.toLowerCase());
-      if (!found) {
-        alert('No encontramos ese ASIN en el catálogo Lama mock. Asegúrate de que existe en tu JSON.');
-        return;
-      }
-      selectProduct(found, 'B');
-    });
-
-    // Botones IA
-    compareMetricsBtn.addEventListener('click', launchMetricsComparison);
-    compareNarrativeBtn.addEventListener('click', launchNarrativeComparison);
-
-    // Estado inicial
-    showInitial();
-    updateCompareButtons();
-  </script>
-</body>
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<App />);
+    </script>
+  </body>
 </html>
