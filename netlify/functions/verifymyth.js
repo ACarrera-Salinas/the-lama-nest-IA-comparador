@@ -1,16 +1,12 @@
-// netlify/functions/verifymyth.js
-
 const fs = require("fs");
 const path = require("path");
 
-// CORS básico
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
-// Rutas candidatas para carpeta data en Netlify
 const DATA_DIR_CANDIDATES = [
   path.join(__dirname, "data"),
   path.join(__dirname, "../data"),
@@ -19,7 +15,6 @@ const DATA_DIR_CANDIDATES = [
   "/var/data",
 ];
 
-// Localiza la carpeta data
 function getDataDir() {
   const tried = [];
   for (const dir of DATA_DIR_CANDIDATES) {
@@ -31,47 +26,59 @@ function getDataDir() {
   );
 }
 
-// Carga lama_index.json y devuelve SIEMPRE un array de productos
-function loadIndexProducts() {
+function loadIndex() {
   const dataDir = getDataDir();
   const indexPath = path.join(dataDir, "lama_index.json");
-
   if (!fs.existsSync(indexPath)) {
-    throw new Error(
-      `No se ha encontrado lama_index.json en ${indexPath}. Asegúrate de generarlo.`
+    throw new Error(`No se ha encontrado lama_index.json en ${indexPath}`);
+  }
+  const raw = fs.readFileSync(indexPath, "utf8");
+  return JSON.parse(raw);
+}
+
+function extractCatalog(indexData) {
+  if (Array.isArray(indexData)) return indexData;
+
+  if (indexData && Array.isArray(indexData.products)) {
+    return indexData.products;
+  }
+
+  if (indexData && typeof indexData === "object") {
+    return Object.keys(indexData).map((asin) => ({
+      asin,
+      ...(indexData[asin] || {}),
+    }));
+  }
+
+  return [];
+}
+
+function findProductMeta(indexData, asin) {
+  if (!asin || !indexData) return null;
+
+  // 1) objeto con claves por ASIN
+  if (!Array.isArray(indexData) && typeof indexData === "object") {
+    if (indexData[asin]) return indexData[asin];
+
+    // 2) array dentro de .products
+    if (Array.isArray(indexData.products)) {
+      const p = indexData.products.find(
+        (x) => x.asin === asin || x.ASIN === asin
+      );
+      if (p) return p;
+    }
+  }
+
+  // 3) índice como array plano
+  if (Array.isArray(indexData)) {
+    return (
+      indexData.find((x) => x.asin === asin || x.ASIN === asin) || null
     );
   }
 
-  const raw = fs.readFileSync(indexPath, "utf8");
-  const indexData = JSON.parse(raw);
-
-  let products = [];
-  if (Array.isArray(indexData)) {
-    products = indexData;
-  } else if (Array.isArray(indexData.products)) {
-    products = indexData.products;
-  } else if (indexData && typeof indexData === "object") {
-    // caso objeto tipo mapa {ASIN: {...}, ...}
-    products = Object.values(indexData);
-  }
-
-  return products;
+  return null;
 }
 
-// Busca producto en el array de productos por asin / ASIN
-function findProductByAsin(products, asin) {
-  if (!asin) return null;
-  const target = asin.trim().toUpperCase();
-  return (
-    products.find((p) => {
-      const a1 = (p.asin || "").toString().toUpperCase();
-      const a2 = (p.ASIN || "").toString().toUpperCase();
-      return a1 === target || a2 === target;
-    }) || null
-  );
-}
-
-// Carga la meta-review en texto
 function loadBlog(asin, lang = "ES") {
   if (!asin) return null;
   const dataDir = getDataDir();
@@ -85,7 +92,6 @@ function loadBlog(asin, lang = "ES") {
   return fs.readFileSync(blogPath, "utf8");
 }
 
-// Llamada a Gemini
 async function callGemini(prompt) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -134,7 +140,6 @@ async function callGemini(prompt) {
 }
 
 exports.handler = async (event) => {
-  // Preflight CORS
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
@@ -143,81 +148,73 @@ exports.handler = async (event) => {
     };
   }
 
-  const queryParams = event.queryStringParameters || {};
-  let bodyParams = {};
-  if (event.httpMethod === "POST" && event.body) {
+  let mode = "metrics";
+  let asinA = "";
+  let asinB = "";
+
+  // GET -> query; POST -> body JSON
+  if (event.httpMethod === "GET") {
+    const params = event.queryStringParameters || {};
+    mode = (params.mode || "metrics").toLowerCase();
+    asinA = (params.asinA || "").trim();
+    asinB = (params.asinB || "").trim();
+  } else {
     try {
-      bodyParams = JSON.parse(event.body);
+      const body = event.body ? JSON.parse(event.body) : {};
+      mode = (body.mode || "metrics").toLowerCase();
+      asinA = (body.asinA || "").trim();
+      asinB = (body.asinB || "").trim();
     } catch (e) {
       console.error("Error parseando body JSON:", e);
-      bodyParams = {};
     }
   }
 
-  const rawMode = queryParams.mode || bodyParams.mode || "metrics";
-  const mode = String(rawMode).toLowerCase();
-
-  const asinA = (queryParams.asinA || bodyParams.asinA || "").trim();
-  const asinB = (queryParams.asinB || bodyParams.asinB || "").trim();
-
   try {
-    /*********************
-     * MODO INDEX (GET)
-     * Devuelve catálogo completo para buscador por nombre.
-     *********************/
+    const indexData = loadIndex();
+
+    // --- MODO INDEX: devolver catálogo para el buscador ---
     if (mode === "index") {
-      const products = loadIndexProducts();
+      const catalog = extractCatalog(indexData);
       return {
         statusCode: 200,
         headers: corsHeaders,
         body: JSON.stringify({
           success: true,
           mode: "index",
-          entries: products.length,
-          products,
+          entries: catalog.length,
+          products: catalog,
         }),
       };
     }
 
-    /*********************
-     * MODOS QUE COMPARAN DOS ASIN
-     *********************/
+    // A partir de aquí siempre necesitamos ambos ASIN
     if (!asinA || !asinB) {
       throw new Error(
-        "Debes enviar asinA y asinB (por ejemplo asinA=XXX&asinB=YYY)."
-      );
-    }
-    if (asinA === asinB) {
-      throw new Error("Los dos productos deben ser distintos (ASIN diferentes).");
-    }
-
-    const products = loadIndexProducts();
-    const productA = findProductByAsin(products, asinA);
-    const productB = findProductByAsin(products, asinB);
-
-    if (!productA || !productB) {
-      throw new Error(
-        `No se encontraron datos Lama en lama_index.json para uno o ambos productos (${asinA}, ${asinB}). ` +
-          "Asegúrate de que ese ASIN esté incluido en lama_index.json (generándolo con tu script de índice agregado)."
+        "Debes indicar asinA y asinB (por ejemplo asinA=B0XXXX y asinB=B0YYYY)."
       );
     }
 
-    /*********************
-     * MODO METRICS
-     *********************/
+    // --- MODO METRICS: tarjetas + resumen rápido de datos ---
     if (mode === "metrics") {
+      const productA = findProductMeta(indexData, asinA);
+      const productB = findProductMeta(indexData, asinB);
+
+      if (!productA || !productB) {
+        throw new Error(
+          `No se encontraron datos Lama para uno o ambos productos (${asinA}, ${asinB}).`
+        );
+      }
+
       const quickSummaryPrompt = `
 Eres el asistente del Comparador Lama.
 
-Tienes los datos JSON de dos productos (A y B), con puntuaciones medias, distribución de estrellas, probabilidad de chasco y los principales pros y contras.
+Tienes los datos JSON de dos productos (A y B). Escribe un único resumen MUY breve y claro para un usuario medio (máximo 90–110 palabras).
 
-Escribe un único resumen muy breve y claro (máximo unas 140 palabras) para un usuario medio, centrado en:
-- Cómo se comparan en calidad percibida y riesgo de chasco.
-- Qué tipo de ventajas destacan los usuarios en cada uno.
-- Qué tipo de problemas son más frecuentes en cada uno.
-- En qué escenarios generales parece encajar mejor A y en cuáles B.
-
-No menciones “JSON”, ni “modelo de lenguaje”, ni “Gemini” y no uses listas ni títulos. Solo un texto corrido.
+Objetivo:
+- Explicar en 3–5 frases en qué se diferencian sus puntos fuertes principales.
+- Resumir de forma neutra para qué sirve mejor cada uno, sin decir todavía cuál debería comprar la persona.
+- Tono neutro, cercano y fácil de leer.
+- No menciones la palabra "JSON", ni "modelo de lenguaje", ni "Gemini". No hagas listas ni títulos, solo un texto corrido.
 
 [PRODUCTO A JSON]
 ${JSON.stringify(productA)}
@@ -235,43 +232,53 @@ ${JSON.stringify(productB)}
           success: true,
           mode: "metrics",
           products: [productA, productB],
-          analysis: quickSummary,
+          analysis: quickSummary, // el frontend lo muestra directamente
+          quickSummary,
         }),
       };
     }
 
-    /*********************
-     * MODO NARRATIVE
-     *********************/
+    // --- MODO NARRATIVE: opinión final corta y orientada a decisión ---
     if (mode === "narrative") {
+      const productA = findProductMeta(indexData, asinA);
+      const productB = findProductMeta(indexData, asinB);
+
+      if (!productA || !productB) {
+        throw new Error(
+          `No se encontraron datos Lama para uno o ambos productos (${asinA}, ${asinB}).`
+        );
+      }
+
       const blogA = loadBlog(asinA, "ES");
       const blogB = loadBlog(asinB, "ES");
 
       const prompt = `
 Actúas como asesor imparcial del Comparador Lama.
 
-Te doy dos meta-reviews en texto (A y B) más algunos datos de contexto. Con eso debes escribir una "opinión final" MUY breve y útil para un usuario medio.
+El usuario ya ha leído un resumen rápido sobre las diferencias de los productos A y B.
+Ahora quiere una ayuda FINAL para decidir.
 
 Instrucciones:
-- Máximo ~170 palabras en total.
-- Empieza con 1–2 frases explicando muy rápido qué enfoque tiene cada producto (tipo de uso, sensaciones, a quién le suele gustar).
-- Después, en 3–4 frases más, explica:
-  - En qué tipo de persona o situación encaja mejor el Producto A.
-  - En qué tipo de persona o situación encaja mejor el Producto B.
-- Usa frases cortas, lenguaje sencillo y tono cercano.
-- No uses títulos, listas ni negritas.
+- Máximo 150–170 palabras.
+- No repitas frases ni ideas de forma casi idéntica al resumen rápido: aporta información más práctica y enfocada en la decisión.
+- Organiza el texto en 3 bloques de 2–3 frases cada uno, separados por un salto de línea:
+  1) Explica para qué tipo de persona o situación encaja mejor el Producto A (hábitos, espacio, nivel de experiencia, frecuencia de uso…).
+  2) Explica para qué tipo de persona o situación encaja mejor el Producto B.
+  3) Cierra con 1–2 frases ayudando a elegir: del tipo "si te ves más en X, ve a por A; si te ves más en Y, mejor B".
+- Usa frases cortas y lenguaje sencillo. Nada de tecnicismos.
 - No menciones "Amazon", "reseñas", "modelo de lenguaje", "Gemini" ni "JSON".
+- No uses listas ni viñetas; basta con texto corrido separado en párrafos.
 
 [PRODUCTO A – DATOS JSON]
 ${JSON.stringify(productA)}
 
-[PRODUCTO A – META-REVIEW]
+[PRODUCTO A – RESUMEN BLOG]
 ${blogA}
 
 [PRODUCTO B – DATOS JSON]
 ${JSON.stringify(productB)}
 
-[PRODUCTO B – META-REVIEW]
+[PRODUCTO B – RESUMEN BLOG]
 ${blogB}
       `.trim();
 
@@ -283,12 +290,13 @@ ${blogB}
         body: JSON.stringify({
           success: true,
           mode: "narrative",
-          text: finalOpinion,
+          text: finalOpinion, // el frontend usa data.text
+          finalOpinion,
         }),
       };
     }
 
-    // Modo no reconocido
+    // --- modo desconocido ---
     return {
       statusCode: 400,
       headers: corsHeaders,
