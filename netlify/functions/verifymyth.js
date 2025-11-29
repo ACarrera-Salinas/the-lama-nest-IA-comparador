@@ -89,7 +89,7 @@ async function callGemini(prompt) {
     throw new Error('Falta GEMINI_API_KEY en las variables de entorno de Netlify.');
   }
 
-  const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const endpoint = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent';
 
   const res = await fetch(`${endpoint}?key=${apiKey}`, {
     method: 'POST',
