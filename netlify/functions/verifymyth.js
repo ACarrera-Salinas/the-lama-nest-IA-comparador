@@ -10,52 +10,51 @@ const path = require("path");
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-// --- CORS ---
+// --- CORS común ---
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type"
+  "Access-Control-Allow-Headers": "Content-Type",
 };
 
-// --- Localización robusta de la carpeta "data" ---
+// --- Localización de la carpeta data ---
 
-let cachedDataDir = null;
+const DATA_DIR_CANDIDATES = [
+  // 1) data junto al bundle de la función
+  path.join(__dirname, "data"),
+  // 2) estructura típica de Netlify con included_files
+  path.join(__dirname, "netlify", "functions", "data"),
+  // 3) rutas absolutas típicas en runtime
+  "/var/task/data",
+  "/var/task/netlify/functions/data",
+  "/var/data",
+];
 
-function resolveDataDir() {
-  if (cachedDataDir) return cachedDataDir;
+function loadDataRoot() {
+  const tried = [];
 
-  const candidates = [
-    // Lo más habitual en Netlify con in-source functions
-    path.join(__dirname, "data"),
-    path.join(__dirname, "..", "data"),
-    path.join(__dirname, "netlify", "functions", "data"),
-    path.join(process.cwd(), "netlify", "functions", "data"),
-    path.join(process.cwd(), "data")
-  ];
-
-  for (const dir of candidates) {
+  for (const candidate of DATA_DIR_CANDIDATES) {
+    tried.push(candidate);
     try {
-      if (fs.existsSync(dir) && fs.statSync(dir).isDirectory()) {
-        cachedDataDir = dir;
-        return dir;
+      if (fs.existsSync(candidate)) {
+        return { root: candidate, tried };
       }
-    } catch (_) {
-      // ignoramos y probamos el siguiente
+    } catch {
+      // ignoramos errores de fs.existsSync y seguimos
     }
   }
 
-  throw new Error(
-    "No se encontró carpeta 'data'. Probadas rutas: " +
-      candidates.join(" | ")
-  );
+  const msg =
+    "No se encontró carpeta 'data'. Probadas rutas: " + tried.join(" | ");
+  throw new Error(msg);
 }
 
-// --- Carga del índice ---
+// --- Carga de índice Lama ---
 
 function loadIndex() {
-  const dataDir = resolveDataDir();
-  const indexPath = path.join(dataDir, "lama_index.json");
+  const { root } = loadDataRoot();
+  const indexPath = path.join(root, "lama_index.json");
 
   const raw = fs.readFileSync(indexPath, "utf-8");
   const parsed = JSON.parse(raw);
@@ -63,49 +62,10 @@ function loadIndex() {
   if (Array.isArray(parsed)) return parsed;
   if (Array.isArray(parsed.products)) return parsed.products;
 
-  throw new Error("Formato inesperado en lama_index.json");
+  throw new Error("Formato inesperado en " + indexPath);
 }
 
-// --- Carga robusta de blogs ---
-// Busca en "data" cualquier fichero que empiece por "<ASIN>_"
-// y termine en "BLOG.TXT" (ignorando mayúsculas/minúsculas).
-
-function loadBlogFile(asin) {
-  const dataDir = resolveDataDir();
-  const asinNorm = (asin || "").trim().toUpperCase();
-
-  let files;
-  try {
-    files = fs.readdirSync(dataDir);
-  } catch (err) {
-    console.error("No se pudo leer el directorio de blogs:", dataDir, err);
-    return "";
-  }
-
-  const target = files.find((name) => {
-    const upper = name.toUpperCase();
-    return upper.startsWith(asinNorm + "_") && upper.endsWith("BLOG.TXT");
-  });
-
-  if (!target) {
-    console.error(
-      `No se encontró fichero de blog para ASIN ${asinNorm} en ${dataDir}. Archivos disponibles:`,
-      files
-    );
-    return "";
-  }
-
-  const filePath = path.join(dataDir, target);
-
-  try {
-    return fs.readFileSync(filePath, "utf-8");
-  } catch (err) {
-    console.error(`Error leyendo blog ${filePath}:`, err);
-    return "";
-  }
-}
-
-// --- Llamada a Gemini ---
+// --- Cliente Gemini ---
 
 async function callGemini(promptText) {
   if (!GEMINI_API_KEY) {
@@ -123,10 +83,10 @@ async function callGemini(promptText) {
       contents: [
         {
           role: "user",
-          parts: [{ text: promptText }]
-        }
-      ]
-    })
+          parts: [{ text: promptText }],
+        },
+      ],
+    }),
   });
 
   if (!res.ok) {
@@ -158,7 +118,10 @@ exports.handler = async (event) => {
     return {
       statusCode: 405,
       headers: corsHeaders,
-      body: JSON.stringify({ success: false, error: "Método no permitido" })
+      body: JSON.stringify({
+        success: false,
+        error: "Método no permitido",
+      }),
     };
   }
 
@@ -174,8 +137,8 @@ exports.handler = async (event) => {
         headers: corsHeaders,
         body: JSON.stringify({
           success: false,
-          error: "Falta 'mode' en la petición."
-        })
+          error: "Falta 'mode' en la petición.",
+        }),
       };
     }
 
@@ -191,13 +154,13 @@ exports.handler = async (event) => {
         categoria_inferida: p.categoria_inferida,
         n_reviews: p.n_reviews,
         mean_stars: p.mean_stars,
-        tags_tematica: p.tags_tematica || []
+        tags_tematica: p.tags_tematica || [],
       }));
 
       return {
         statusCode: 200,
         headers: corsHeaders,
-        body: JSON.stringify({ success: true, products: lite })
+        body: JSON.stringify({ success: true, products: lite }),
       };
     }
 
@@ -208,8 +171,8 @@ exports.handler = async (event) => {
         headers: corsHeaders,
         body: JSON.stringify({
           success: false,
-          error: "Faltan 'asinA' y/o 'asinB' en la petición."
-        })
+          error: "Faltan 'asinA' y/o 'asinB' en la petición.",
+        }),
       };
     }
 
@@ -227,8 +190,8 @@ exports.handler = async (event) => {
         body: JSON.stringify({
           success: false,
           error:
-            "No encontramos uno o ambos ASIN en lama_index.json. Revisa el índice."
-        })
+            "No encontramos uno o ambos ASIN en lama_index.json. Revisa el índice.",
+        }),
       };
     }
 
@@ -269,8 +232,9 @@ ${JSON.stringify(prodB, null, 2)}
 
         analysis = await callGemini(prompt);
       } catch (err) {
-        console.error("Error en Gemini metrics:", err.message);
-        analysis = null; // Devolvemos igualmente los datos
+        console.error("Error en Gemini metrics:", err.message || err);
+        // Devolvemos igualmente los datos aunque falle el análisis IA
+        analysis = null;
       }
 
       return {
@@ -279,31 +243,48 @@ ${JSON.stringify(prodB, null, 2)}
         body: JSON.stringify({
           success: true,
           products: [prodA, prodB],
-          analysis
-        })
+          analysis,
+        }),
       };
     }
 
     // --- MODO NARRATIVE: IA sobre blogs/meta-reviews ---
     if (mode === "narrative") {
-      const blogA = loadBlogFile(prodA.asin);
-      const blogB = loadBlogFile(prodB.asin);
+      const { root: dataRoot } = loadDataRoot();
+
+      const blogPathA = path.join(
+        dataRoot,
+        `${prodA.asin}_ES_blog.txt`
+      );
+      const blogPathB = path.join(
+        dataRoot,
+        `${prodB.asin}_ES_blog.txt`
+      );
+
+      let blogA = "";
+      let blogB = "";
+
+      try {
+        blogA = fs.readFileSync(blogPathA, "utf-8");
+      } catch (err) {
+        console.error("No se pudo leer blog A:", blogPathA, err.message || err);
+      }
+
+      try {
+        blogB = fs.readFileSync(blogPathB, "utf-8");
+      } catch (err) {
+        console.error("No se pudo leer blog B:", blogPathB, err.message || err);
+      }
 
       if (!blogA || !blogB) {
-        const missingAsins = [];
-        if (!blogA) missingAsins.push(prodA.asin);
-        if (!blogB) missingAsins.push(prodB.asin);
-
         return {
           statusCode: 404,
           headers: corsHeaders,
           body: JSON.stringify({
             success: false,
             error:
-              "No se encontraron los blogs para los siguientes ASIN: " +
-              missingAsins.join(", ") +
-              ". Asegúrate de que existan archivos <ASIN>_XX_blog.txt en la carpeta 'data' de la función."
-          })
+              "No se encontraron los blogs para uno o ambos productos. Revisa los archivos *_ES_blog.txt.",
+          }),
         };
       }
 
@@ -338,21 +319,23 @@ ${blogB}
       try {
         text = await callGemini(prompt);
       } catch (err) {
-        console.error("Error en Gemini narrative:", err.message);
+        console.error("Error en Gemini narrative:", err.message || err);
         return {
           statusCode: 500,
           headers: corsHeaders,
           body: JSON.stringify({
             success: false,
-            error: "Error generando la opinión final de la IA."
-          })
+            error:
+              "Error generando la opinión final de la IA: " +
+              (err.message || String(err)),
+          }),
         };
       }
 
       return {
         statusCode: 200,
         headers: corsHeaders,
-        body: JSON.stringify({ success: true, text })
+        body: JSON.stringify({ success: true, text }),
       };
     }
 
@@ -362,18 +345,21 @@ ${blogB}
       headers: corsHeaders,
       body: JSON.stringify({
         success: false,
-        error: "Modo no reconocido. Usa 'index', 'metrics' o 'narrative'."
-      })
+        error: "Modo no reconocido. Usa 'index', 'metrics' o 'narrative'.",
+      }),
     };
   } catch (err) {
     console.error("Error general verifymyth:", err);
+
     return {
       statusCode: 500,
       headers: corsHeaders,
       body: JSON.stringify({
         success: false,
-        error: "Error interno en verifymyth: " + (err.message || String(err))
-      })
+        error:
+          "Error interno en verifymyth: " +
+          (err.message || String(err)),
+      }),
     };
   }
 };
