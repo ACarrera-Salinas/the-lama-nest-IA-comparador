@@ -9,7 +9,7 @@
     />
     <meta
       name="description"
-      content="Comparador IA de TheLamaNest: elige dos productos...tengan meta-review y deja que el Lama sabio te ayude a decidir."
+      content="Comparador IA de TheLamaNest: elige dos productos que ya tengan meta-review y deja que el Lama sabio te ayude a decidir."
     />
 
     <!-- Tailwind CDN -->
@@ -245,7 +245,7 @@
                         if (e.key === "Enter") {
                           e.preventDefault();
                           if (suggestions.length > 0) {
-                            handleSelect(suggestions[0]); // selecciona el primer sugerido
+                            handleSelect(suggestions[0]);
                           }
                         }
                       }}
@@ -364,6 +364,25 @@
         );
       }
 
+      // --- Función para hacer las etiquetas más UX-friendly (sin diccionario) ---
+      function humanizeTag(tag) {
+        if (!tag) return "";
+
+        // Asegurar string y limpiar espacios
+        let raw = String(tag).trim();
+
+        // Sustituir guiones bajos o medios por espacios
+        raw = raw.replace(/[_-]+/g, " ");
+
+        // Pasar a minúsculas
+        raw = raw.toLowerCase();
+
+        // Capitalizar cada palabra
+        const pretty = raw.replace(/\b\w/g, (c) => c.toUpperCase());
+
+        return pretty;
+      }
+
       function BulletList({ items, tone }) {
         if (!items || !items.length) return <span className="text-xs">—</span>;
         const base =
@@ -375,11 +394,14 @@
 
         return (
           <div className="flex flex-wrap">
-            {items.map((it) => (
-              <span key={it} className={base + " " + cls}>
-                {it}
-              </span>
-            ))}
+            {items.map((it) => {
+              const label = humanizeTag(it);
+              return (
+                <span key={it} className={base + " " + cls}>
+                  {label}
+                </span>
+              );
+            })}
           </div>
         );
       }
@@ -725,14 +747,14 @@
 
                               <div className="mt-3">
                                 <h3 className="text-xs font-semibold text-emerald-800 mb-1">
-                                  Lo que suele gustar más (según las reseñas)
+                                  Lo que suele gustar más
                                 </h3>
                                 <BulletList items={p.top_pros} tone="good" />
                               </div>
 
                               <div className="mt-3 mb-4">
                                 <h3 className="text-xs font-semibold text-rose-800 mb-1">
-                                  Lo que da más problemas o convence menos
+                                  Lo que puede mejorar un poquito
                                 </h3>
                                 <BulletList items={p.top_contras} tone="bad" />
                               </div>
@@ -781,7 +803,7 @@
                   </>
                 )}
 
-                {/* Opinión final IA sobre blogs */}
+                {/* Opinión final IA */}
                 {narrativeStatus === "loading" && (
                   <div className="bg-white border border-slate-200 rounded-2xl p-6 text-sm text-slate-700 text-center fade-in">
                     Leyendo las meta-reviews y preparando una opinión final...
