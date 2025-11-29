@@ -232,13 +232,13 @@ ${JSON.stringify(productB)}
           success: true,
           mode: "metrics",
           products: [productA, productB],
-          analysis: quickSummary, // el frontend lo muestra directamente
+          analysis: quickSummary,
           quickSummary,
         }),
       };
     }
 
-    // --- MODO NARRATIVE: opinión final corta y orientada a decisión ---
+    // --- MODO NARRATIVE: opinión / conclusión final corta y orientada a decisión ---
     if (mode === "narrative") {
       const productA = findProductMeta(indexData, asinA);
       const productB = findProductMeta(indexData, asinB);
@@ -290,7 +290,7 @@ ${blogB}
         body: JSON.stringify({
           success: true,
           mode: "narrative",
-          text: finalOpinion, // el frontend usa data.text
+          text: finalOpinion,
           finalOpinion,
         }),
       };
@@ -317,4 +317,3 @@ ${blogB}
     };
   }
 };
-
