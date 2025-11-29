@@ -255,16 +255,16 @@
           </h3>
           <div class="grid md:grid-cols-3 gap-5 text-sm text-slate-700">
             <div>
-              <h4 class="font-semibold text-slate-900 mb-1.5">Estrellas con contexto</h4>
-              <p>No miramos solo la media. Se da peso a cuántas personas opinan y cómo son las malas experiencias.</p>
+              <h4 class="font-semibold text-slate-900 mb-1.5">Calidad media real</h4>
+              <p>No solo miramos la media de estrellas: el tamaño de muestra, el intervalo de confianza y el reparto de 1–2 estrellas importan.</p>
             </div>
             <div>
               <h4 class="font-semibold text-slate-900 mb-1.5">Probabilidad de chasco</h4>
-              <p>Las reseñas de 1–2 estrellas cuentan mucho: si hay patrón de “se rompe al mes” o “no limpia nada”, la IA lo pone encima de la mesa.</p>
+              <p>Si hay demasiada gente diciendo que “se rompe pronto” o “no hace lo que promete”, el riesgo sube y el comparador te lo marca claro.</p>
             </div>
             <div>
-              <h4 class="font-semibold text-slate-900 mb-1.5">Contexto de uso</h4>
-              <p>En la versión completa se tendrá en cuenta también el contexto de uso (viaje, encías sensibles, mascotas…) para ajustar la recomendación.</p>
+              <h4 class="font-semibold text-slate-900 mb-1.5">Patrones en pros y contras</h4>
+              <p>La IA resume qué se repite de verdad en las reseñas: qué gusta más y qué falla más, para que no compres solo por una foto bonita.</p>
             </div>
           </div>
         </section>
@@ -309,46 +309,50 @@
       {
         asin: "B0B4SG34QP",
         nombre_producto: "Oral-B Pro 3 3000 Sensi Ultrathin",
-        marca: "Oral-B",
+        market: "ES",
         categoria_inferida: "cepillos_electricos",
-        precio: 39.95,
-        mean_stars: 4.6,
         n_reviews: 1240,
+        mean_stars: 4.6,
+        stars_pct: { "5": 0.75, "4": 0.15, "3": 0.05, "2": 0.02, "1": 0.03 },
+        lama_lb95: 4.53,
+        lama_ub95: 4.69,
         prob_chasco: 0.04,
-        tags_tematica: ["encías_sensibles", "bateria_li-ion", "sensor_presión"]
+        fecha_ultima_review: "2025-10-26",
+        top_pros: ["limpieza", "encías sensibles", "sensor presión", "batería"],
+        top_contras: ["precio recambios", "ruido", "vibración"],
+        tags_tematica: ["cepillo_electrico", "encías_sensibles", "sensor_presion", "uso_diario"]
       },
       {
         asin: "B07B756S34",
         nombre_producto: "Philips Sonicare ProtectiveClean 4300",
-        marca: "Philips",
+        market: "ES",
         categoria_inferida: "cepillos_electricos",
-        precio: 45.00,
-        mean_stars: 4.4,
         n_reviews: 850,
+        mean_stars: 4.4,
+        stars_pct: { "5": 0.68, "4": 0.20, "3": 0.07, "2": 0.02, "1": 0.03 },
+        lama_lb95: 4.31,
+        lama_ub95: 4.49,
         prob_chasco: 0.09,
-        tags_tematica: ["sónico", "blanqueamiento", "viaje"]
+        fecha_ultima_review: "2025-10-20",
+        top_pros: ["tecnología sónica", "sensación de limpieza", "temporizador"],
+        top_contras: ["recambios caros", "ruido agudo", "adaptación inicial"],
+        tags_tematica: ["cepillo_electrico", "tecnologia_sonica", "blanqueamiento", "viaje"]
       },
       {
         asin: "B09C3X43L1",
         nombre_producto: "Oclean X Pro Elite",
-        marca: "Oclean",
+        market: "ES",
         categoria_inferida: "cepillos_electricos",
-        precio: 59.90,
-        mean_stars: 4.2,
         n_reviews: 320,
+        mean_stars: 4.2,
+        stars_pct: { "5": 0.60, "4": 0.10, "3": 0.10, "2": 0.05, "1": 0.15 },
+        lama_lb95: 4.02,
+        lama_ub95: 4.37,
         prob_chasco: 0.15,
-        tags_tematica: ["pantalla_táctil", "app_inteligente", "silencioso"]
-      },
-      {
-        asin: "RBT123ASP",
-        nombre_producto: "Roborock Q7 Max+",
-        marca: "Roborock",
-        categoria_inferida: "robots_aspiradores",
-        precio: 499.00,
-        mean_stars: 4.5,
-        n_reviews: 2100,
-        prob_chasco: 0.07,
-        tags_tematica: ["mascotas", "alfombras", "autovaciado"]
+        fecha_ultima_review: "2025-09-30",
+        top_pros: ["silencioso", "pantalla", "app"],
+        top_contras: ["app inestable", "táctil poco preciso", "recambios"],
+        tags_tematica: ["cepillo_electrico", "pantalla", "app", "gadget_tech"]
       }
     ];
 
@@ -411,7 +415,7 @@
       const lower = term.toLowerCase();
       return CATALOG.filter(p => {
         if (!lower) return true;
-        const text = (p.nombre_producto + ' ' + p.marca + ' ' + p.asin).toLowerCase();
+        const text = (p.nombre_producto + ' ' + p.asin).toLowerCase();
         return text.includes(lower);
       }).slice(0, 10);
     }
@@ -428,7 +432,6 @@
         item.className = 'w-full text-left px-3 py-2 hover:bg-amber-50 text-xs border-b last:border-b-0 border-slate-100 flex flex-col';
         item.innerHTML = `
           <span class="font-semibold text-slate-900">${p.nombre_producto}</span>
-          <span class="text-[11px] text-slate-500">${p.marca}</span>
           <span class="text-[11px] text-slate-400">ASIN: ${p.asin}</span>
         `;
         item.addEventListener('click', () => {
@@ -474,8 +477,12 @@
             <span class="text-[10px] text-slate-400">ASIN: ${p.asin}</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-slate-500">${p.marca}</span>
-            <span class="text-[11px] text-slate-500">${p.mean_stars.toFixed(1)} ★ (${p.n_reviews})</span>
+            <span class="text-[11px] text-slate-500">
+              ${(p.mean_stars ?? 0).toFixed(1)} ★ (${p.n_reviews ?? 0})
+            </span>
+            <span class="text-[10px] text-slate-400 uppercase tracking-[0.14em]">
+              ${(p.market || '').toUpperCase()}
+            </span>
           </div>
           <div class="flex flex-wrap gap-1 mt-1">
             ${(p.tags_tematica || []).slice(0,3).map(tag => `
@@ -502,6 +509,14 @@
       }
     }
 
+    function formatDateISOToES(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return dateStr;
+      const [y, m, d] = parts;
+      return `${d}/${m}/${y}`;
+    }
+
     function probChascoBadge(prob) {
       if (prob > 0.15) return 'Alto riesgo de chasco';
       if (prob > 0.08) return 'Riesgo moderado de chasco';
@@ -513,42 +528,87 @@
       products.forEach(p => {
         const card = document.createElement('article');
         card.className = 'relative flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm p-4 md:p-5';
+
+        const market = p.market ? String(p.market).toUpperCase() : '';
+        const lb = typeof p.lama_lb95 === 'number' ? p.lama_lb95.toFixed(2) : '-';
+        const ub = typeof p.lama_ub95 === 'number' ? p.lama_ub95.toFixed(2) : '-';
+        const prob = typeof p.prob_chasco === 'number' ? p.prob_chasco : 0;
+        const lastDate = formatDateISOToES(p.fecha_ultima_review);
+
         card.innerHTML = `
           <div class="flex justify-between items-start gap-2 mb-3">
             <div>
-              <div class="text-[11px] text-slate-400 uppercase tracking-[0.14em]">
-                ${(p.categoria_inferida || '').replace('_',' ')}
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-[11px] text-slate-400 uppercase tracking-[0.14em]">
+                  ${(p.categoria_inferida || '').replace('_', ' ')}
+                </span>
+                ${market ? `
+                  <span class="px-2 py-0.5 rounded-full bg-slate-900 text-amber-200 text-[10px] uppercase tracking-[0.14em]">
+                    ${market}
+                  </span>` : ''
+                }
               </div>
-              <h3 class="text-sm md:text-base font-bold text-slate-900 leading-snug mt-1">
+              <h3 class="text-sm md:text-base font-bold text-slate-900 leading-snug">
                 ${p.nombre_producto}
               </h3>
-              <p class="text-[11px] text-slate-500">${p.marca || ''}</p>
             </div>
             <div class="flex flex-col items-end gap-1">
               <div class="flex items-center gap-1.5">
                 <span class="text-amber-400">★</span>
-                <span class="font-semibold text-slate-900 text-sm">${(p.mean_stars ?? 0).toFixed(1)}</span>
-                <span class="text-[11px] text-slate-400">(${p.n_reviews ?? 0})</span>
+                <span class="font-semibold text-slate-900 text-sm">
+                  ${(p.mean_stars ?? 0).toFixed(1)}
+                </span>
+                <span class="text-[11px] text-slate-400">
+                  (${p.n_reviews ?? 0})
+                </span>
               </div>
               <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-800 rounded-full border border-amber-100 text-[10px]">
-                ${probChascoBadge(p.prob_chasco ?? 0)}
+                ${probChascoBadge(prob)}
+              </span>
+              <span class="text-[10px] text-slate-400">
+                IC95%: ${lb}–${ub}
               </span>
             </div>
           </div>
-          <div class="flex flex-wrap gap-1 mb-2">
-            ${(p.tags_tematica || []).slice(0,3).map(tag => `
+
+          <div class="flex flex-wrap gap-1 mb-3">
+            ${(p.tags_tematica || []).slice(0,4).map(tag => `
               <span class="px-2 py-0.5 bg-amber-50 text-amber-800 text-[10px] rounded-full border border-amber-100">
                 #${tag}
               </span>
             `).join('')}
           </div>
-          <p class="text-xs text-slate-700 bg-slate-50 border border-slate-100 rounded-xl p-3 leading-relaxed">
-            <span class="font-semibold text-[11px] uppercase tracking-[0.12em] block mb-1">Resumen Lama</span>
-            ${p.resumen_lama || 'La IA usará aquí el resumen de tu meta-review para este producto.'}
-          </p>
-          <div class="mt-3 flex justify-between items-center text-xs">
-            <span class="text-slate-500">Precio orientativo ~${(p.precio ?? 0).toFixed(0)}€</span>
-            <span class="text-slate-400">ASIN: ${p.asin}</span>
+
+          <div class="grid grid-cols-2 gap-3 mt-1">
+            <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5">
+              <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 mb-1">
+                Top pros (más mencionados)
+              </p>
+              <ul class="text-[11px] text-slate-700 space-y-0.5">
+                ${(p.top_pros || []).slice(0,4).map(pro => `
+                  <li>• ${pro}</li>
+                `).join('') || '<li class="text-slate-400">Sin datos</li>'}
+              </ul>
+            </div>
+            <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5">
+              <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 mb-1">
+                Top contras (alertas)
+              </p>
+              <ul class="text-[11px] text-slate-700 space-y-0.5">
+                ${(p.top_contras || []).slice(0,4).map(con => `
+                  <li>• ${con}</li>
+                `).join('') || '<li class="text-slate-400">Sin datos</li>'}
+              </ul>
+            </div>
+          </div>
+
+          <div class="mt-3 flex justify-between items-center text-[11px] text-slate-500">
+            <span>
+              Última review: ${lastDate || '–'}
+            </span>
+            <span class="text-slate-400">
+              ASIN: ${p.asin}
+            </span>
           </div>
         `;
         cardsContainer.appendChild(card);
@@ -557,6 +617,27 @@
 
     function renderTableFromAPI(products) {
       const [a, b] = products;
+
+      const a_lb = typeof a.lama_lb95 === 'number' ? a.lama_lb95.toFixed(2) : '-';
+      const a_ub = typeof a.lama_ub95 === 'number' ? a.lama_ub95.toFixed(2) : '-';
+      const b_lb = typeof b.lama_lb95 === 'number' ? b.lama_lb95.toFixed(2) : '-';
+      const b_ub = typeof b.lama_ub95 === 'number' ? b.lama_ub95.toFixed(2) : '-';
+
+      const a_prob = typeof a.prob_chasco === 'number' ? a.prob_chasco : 0;
+      const b_prob = typeof b.prob_chasco === 'number' ? b.prob_chasco : 0;
+
+      const a_stars = a.stars_pct || {};
+      const b_stars = b.stars_pct || {};
+
+      function pct(starsObj, key) {
+        const v = starsObj[key];
+        if (typeof v !== 'number') return '–';
+        return `${(v * 100).toFixed(0)}%`;
+      }
+
+      const a_date = formatDateISOToES(a.fecha_ultima_review);
+      const b_date = formatDateISOToES(b.fecha_ultima_review);
+
       comparisonTable.innerHTML = `
         <thead class="bg-slate-50 text-slate-500 font-semibold uppercase tracking-[0.12em]">
           <tr>
@@ -567,19 +648,89 @@
         </thead>
         <tbody class="divide-y divide-slate-100">
           <tr>
-            <td class="px-5 py-3 font-semibold text-slate-900">Calidad (estrellas)</td>
-            <td class="px-5 py-3 text-sm">${(a.mean_stars ?? 0).toFixed(1)} ★ (${a.n_reviews ?? 0})</td>
-            <td class="px-5 py-3 text-sm">${(b.mean_stars ?? 0).toFixed(1)} ★ (${b.n_reviews ?? 0})</td>
+            <td class="px-5 py-3 font-semibold text-slate-900">Calidad media (estrellas)</td>
+            <td class="px-5 py-3 text-xs">
+              ${(a.mean_stars ?? 0).toFixed(1)} ★ (${a.n_reviews ?? 0})<br>
+              <span class="text-[11px] text-slate-500">IC95%: ${a_lb}–${a_ub}</span>
+            </td>
+            <td class="px-5 py-3 text-xs">
+              ${(b.mean_stars ?? 0).toFixed(1)} ★ (${b.n_reviews ?? 0})<br>
+              <span class="text-[11px] text-slate-500">IC95%: ${b_lb}–${b_ub}</span>
+            </td>
           </tr>
+
           <tr>
             <td class="px-5 py-3 font-semibold text-slate-900">Probabilidad de chasco</td>
-            <td class="px-5 py-3 font-mono text-[11px]">${((a.prob_chasco ?? 0) * 100).toFixed(0)}%</td>
-            <td class="px-5 py-3 font-mono text-[11px]">${((b.prob_chasco ?? 0) * 100).toFixed(0)}%</td>
+            <td class="px-5 py-3 font-mono text-[11px]">
+              ${(a_prob * 100).toFixed(0)}%
+            </td>
+            <td class="px-5 py-3 font-mono text-[11px]">
+              ${(b_prob * 100).toFixed(0)}%
+            </td>
           </tr>
+
           <tr>
-            <td class="px-5 py-3 font-semibold text-slate-900 align-top">Resumen Lama</td>
-            <td class="px-5 py-3 align-top text-xs text-slate-700">${a.resumen_lama || ''}</td>
-            <td class="px-5 py-3 align-top text-xs text-slate-700">${b.resumen_lama || ''}</td>
+            <td class="px-5 py-3 font-semibold text-slate-900 align-top">
+              Distribución de estrellas
+            </td>
+            <td class="px-5 py-3 align-top text-[11px] text-slate-700">
+              ⭐⭐⭐⭐⭐ ${pct(a_stars, '5')}<br>
+              ⭐⭐⭐⭐ ${pct(a_stars, '4')}<br>
+              ⭐⭐⭐ ${pct(a_stars, '3')}<br>
+              ⭐⭐ ${pct(a_stars, '2')}<br>
+              ⭐ ${pct(a_stars, '1')}
+            </td>
+            <td class="px-5 py-3 align-top text-[11px] text-slate-700">
+              ⭐⭐⭐⭐⭐ ${pct(b_stars, '5')}<br>
+              ⭐⭐⭐⭐ ${pct(b_stars, '4')}<br>
+              ⭐⭐⭐ ${pct(b_stars, '3')}<br>
+              ⭐⭐ ${pct(b_stars, '2')}<br>
+              ⭐ ${pct(b_stars, '1')}
+            </td>
+          </tr>
+
+          <tr>
+            <td class="px-5 py-3 font-semibold text-slate-900 align-top">
+              Top pros (más repetidos)
+            </td>
+            <td class="px-5 py-3 align-top text-[11px] text-slate-700">
+              <ul class="space-y-0.5">
+                ${(a.top_pros || []).slice(0,5).map(p => `<li>• ${p}</li>`).join('') || '<li class="text-slate-400">Sin datos</li>'}
+              </ul>
+            </td>
+            <td class="px-5 py-3 align-top text-[11px] text-slate-700">
+              <ul class="space-y-0.5">
+                ${(b.top_pros || []).slice(0,5).map(p => `<li>• ${p}</li>`).join('') || '<li class="text-slate-400">Sin datos</li>'}
+              </ul>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="px-5 py-3 font-semibold text-slate-900 align-top">
+              Top contras (alertas)
+            </td>
+            <td class="px-5 py-3 align-top text-[11px] text-slate-700">
+              <ul class="space-y-0.5">
+                ${(a.top_contras || []).slice(0,5).map(c => `<li>• ${c}</li>`).join('') || '<li class="text-slate-400">Sin datos</li>'}
+              </ul>
+            </td>
+            <td class="px-5 py-3 align-top text-[11px] text-slate-700">
+              <ul class="space-y-0.5">
+                ${(b.top_contras || []).slice(0,5).map(c => `<li>• ${c}</li>`).join('') || '<li class="text-slate-400">Sin datos</li>'}
+              </ul>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="px-5 py-3 font-semibold text-slate-900">
+              Última review analizada
+            </td>
+            <td class="px-5 py-3 text-[11px] text-slate-700">
+              ${a_date || '–'}
+            </td>
+            <td class="px-5 py-3 text-[11px] text-slate-700">
+              ${b_date || '–'}
+            </td>
           </tr>
         </tbody>
       `;
@@ -614,6 +765,7 @@
           throw new Error('Formato de respuesta inesperado en verifymyth (metrics).');
         }
 
+        // Actualizamos con los objetos completos del índice
         selectedA = data.products[0];
         selectedB = data.products[1];
 
