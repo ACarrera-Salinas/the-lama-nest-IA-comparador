@@ -1,43 +1,789 @@
+[
+
+{"asin": "B0B4SG34QP", "nombre_producto": "Oral-B Vitality PRO Cepillo de Dientes Eléctrico", "market": "ES", "categoria_inferida": "cepillos_electricos", "n_reviews": 399, "mean_stars": 4.6, "stars_pct": {"5": 0.75, "4": 0.16, "3": 0.06, "2": 0.01, "1": 0.02}, "lama_lb95": 4.52, "lama_ub95": 4.68, "prob_chasco": 0.08, "fecha_ultima_review": "2025-10-26", "top_pros": ["limpieza", "temporizador", "precio", "calidad", "bateria", "carga", "velocidades"], "top_contras": ["bateria", "limpieza", "temporizador", "potencia", "carga", "precio", "cabezal"], "tags_tematica": ["cepillos_electricos", "higiene_dental", "limpieza_diaria", "temporizador", "bateria_corta", "relacion_calidad_precio", "viaje", "uso_diario"]},
+
+{"asin":"B0B716HTS1","nombre_producto":"CXWXC Rodillo plegable para Bicicleta 26 - 29 pulgadas (max.150 kg)","market":"ES","categoria_inferida":"rodillos_bicicleta","n_reviews":871,"mean_stars":4.2,"stars_pct":{"5":0.62,"4":0.2,"3":0.08,"2":0.04,"1":0.06},"lama_lb95":4.12,"lama_ub95":4.28,"prob_chasco":0.15,"fecha_ultima_review":"2025-10-12","top_pros":["uso_domestico","estabilidad_estructura","ruido","compatibilidad_bicis","montaje","resistencia","neumatico_con_tacos"],"top_contras":["uso_domestico","compatibilidad_bicis","ruido","estabilidad_estructura","montaje","accesorios_incluidos","resistencia"],"tags_tematica":["rodillos_bicicleta","entrenamiento_ciclismo","uso_domestico","compatibilidad_bicis","ruido","montaje_rapido","estabilidad_estructura","accesorios_incluidos","rehabilitacion"]},
+
+{"asin":"B0BHSXFTGH","nombre_producto":"Fullstar Multifuncional Cortador de Verdura","market":"ES","categoria_inferida":"cortadores_verduras","n_reviews":52221,"mean_stars":4.6,"stars_pct":{"5":0.7449,"4":0.1939,"3":0.0408,"2":0.0204,"1":0.0},"lama_lb95":4.59,"lama_ub95":4.61,"prob_chasco":0.08,"fecha_ultima_review":"2025-11-21","top_pros":["calidad_corte","facilidad_uso","ahorro_tiempo","versatilidad_accesorios","practico_cocina_diaria","buena_relacion_calidad_precio"],"top_contras":["dificultad_limpieza","riesgo_cortes_mano","plastico_fragil","problemas_con_tomate_y_verduras_blandas","requiere_fuerza_al_usar","capacidad_recipiente_limitada"],"tags_tematica":["cortadores_verduras","preparacion_rapida_comidas","cocina_diaria","ahorro_tiempo","variedad_cortes","limpieza_delicada","plastico_sensible","capacidad_recipiente_pequena","cocina_familiar"]},
+
+
+{"asin":"B0BQ1Y86P1","nombre_producto":"Cecotec Bicicleta estática plegable DrumFit X-Bike Neo ASIN: B0BQ1Y86P1","market":"ES","categoria_inferida":"bicicletas_estaticas","n_reviews":2590,"mean_stars":4.3,"stars_pct":{"5":0.66,"4":0.17,"3":0.06,"2":0.03,"1":0.08},"lama_lb95":4.25,"lama_ub95":4.35,"prob_chasco":0.15,"fecha_ultima_review":"2025-10-18","top_pros":["ruido","calidad_precio","plegado_espacio","estabilidad","montaje","pedales"],"top_contras":["ruido","estabilidad","sillin_confort","resistencia","pedales"],"tags_tematica":["bicicletas_estaticas","fitness_casa","entrenamiento_cardio","uso_domestico","plegado_espacio","ruido","estabilidad","sillin_confort","relacion_calidad_precio"]},
+
 {
-  "asin": "B0B4SG34QP",
-  "nombre_producto": "Oral-B Vitality PRO Cepillo de Dientes Eléctrico",
-  "market": "ES",
-  "categoria_inferida": "cepillos_electricos",
-  "n_reviews": 399,
-  "mean_stars": 4.6,
-  "stars_pct": {
-    "5": 0.75,
-    "4": 0.16,
-    "3": 0.06,
-    "2": 0.01,
-    "1": 0.02
-  },
-  "lama_lb95": 4.53,
-  "lama_ub95": 4.69,
-  "prob_chasco": 0.1,
-  "fecha_ultima_review": "2025-10-26",
-  "top_pros": [
-    "limpieza",
-    "temporizador",
-    "precio",
-    "calidad",
-    "bateria"
-  ],
-  "top_contras": [
-    "bateria",
-    "limpieza",
-    "temporizador",
-    "potencia",
-    "carga"
-  ],
-  "tags_tematica": [
-    "cepillo_electrico",
-    "higiene_dental",
-    "limpieza_profunda",
-    "uso_diario",
-    "bateria_corta",
-    "precio_ajustado",
-    "viaje",
-    "temporizador_2_minutos"
-  ]
-}
+"asin": "B0CKMWXPRR",
+"nombre_producto": "KONGZEE DIY Electroestimulador Muscular Fisioterapia",
+"market": "ES",
+"categoria_inferida": "electroestimuladores_musculares",
+"n_reviews": 1779,
+"mean_stars": 4.4,
+"stars_pct": {
+"5": 0.71,
+"4": 0.16,
+"3": 0.06,
+"2": 0.03,
+"1": 0.04
+},
+"lama_lb95": 4.35,
+"lama_ub95": 4.45,
+"prob_chasco": 0.1,
+"fecha_ultima_review": "2025-11-02",
+"top_pros": [
+"facilidad_uso",
+"funcionamiento_correcto",
+"funcion_tens",
+"bateria_recargable",
+"alivio_dolor",
+"modos_y_niveles",
+"electrodos_adhesion"
+],
+"top_contras": [
+"eficacia_inconsistente",
+"instrucciones_mejorables",
+"electrodos_adhesion_mejorable"
+],
+"tags_tematica": [
+"electroestimulador_muscular",
+"tens_ems",
+"alivio_dolor",
+"uso_domestico",
+"facilidad_uso",
+"bateria_recargable",
+"diseno_portatil",
+"instrucciones_mejorables",
+"electrodos_adhesion_mejorable",
+"eficacia_inconsistente"
+]
+},
+
+{
+"asin": "B0C6G6QQ6R",
+"nombre_producto": "Good Nite Manta Ponderada pesada anti - estrés",
+"market": "ES",
+"categoria_inferida": "mantas_ponderadas",
+"n_reviews": 886,
+"mean_stars": 4.5,
+"stars_pct": {
+"5": 0.75,
+"4": 0.12,
+"3": 0.06,
+"2": 0.02,
+"1": 0.05
+},
+"lama_lb95": 4.431,
+"lama_ub95": 4.569,
+"prob_chasco": 0.091,
+"fecha_ultima_review": "2025-10-10",
+"top_pros": [
+"peso",
+"sueno",
+"calidad",
+"calor",
+"tamano",
+"lavado"
+],
+"top_contras": [
+"peso",
+"sueno",
+"calor",
+"lavado",
+"tamano",
+"calidad"
+],
+"tags_tematica": [
+"manta_ponderada",
+"sueno_descanso",
+"gestion_estres",
+"peso_alto",
+"calor_invierno",
+"lavado_complicado",
+"uso_diario",
+"calidad_materiales"
+]
+},
+
+{"asin":"B0CLRYN7BX","nombre_producto":"Mobiclinic Banco de musculación Plegable","market":"ES","categoria_inferida":"bancos_musculacion","n_reviews":364,"mean_stars":4.6,"stars_pct":{"5":0.78,"4":0.15,"3":0.04,"2":0.01,"1":0.02},"lama_lb95":4.52,"lama_ub95":4.68,"prob_chasco":0.09,"fecha_ultima_review":"2025-11-02","top_pros":["montaje","robustez","plegado_espacio","comodidad","calidad_precio","estabilidad","calidad_materiales"],"top_contras":["calidad_materiales","peso_soportado","plegado_espacio"],"tags_tematica":["bancos_musculacion","fitness_casa","entrenamiento_fuerza","uso_domestico","plegado_espacio","montaje_rapido","robustez","comodidad","calidad_precio","calidad_materiales"]},
+
+{
+"asin": "B0BYDDRX6X",
+"nombre_producto": "CAMBIVO Medias de compresión fitness",
+"market": "ES",
+"categoria_inferida": "medias_compresion",
+"n_reviews": 1402,
+"mean_stars": 4.4,
+"stars_pct": {
+"5": 0.68,
+"4": 0.16,
+"3": 0.08,
+"2": 0.03,
+"1": 0.05
+},
+"lama_lb95": 4.343,
+"lama_ub95": 4.457,
+"prob_chasco": 0.145,
+"fecha_ultima_review": "2025-11-10",
+"top_pros": [
+"rendimiento_compresion",
+"comodidad",
+"talla_ajuste",
+"calidad_tejido",
+"relacion_calidad_precio"
+],
+"top_contras": [
+"talla_ajuste",
+"no_cumple_esperado",
+"rendimiento_compresion",
+"comodidad",
+"calidad_tejido",
+"decepcion_general"
+],
+"tags_tematica": [
+"medias_compresion",
+"rendimiento_compresion",
+"comodidad",
+"talla_ajuste",
+"calidad_tejido",
+"relacion_calidad_precio",
+"no_cumple_esperado",
+"decepcion_general",
+"uso_deportivo",
+"fitness"
+]
+},
+
+{"asin":"B0CPS6MPL5","nombre_producto":"GRIFEMA Bandas Elásticas Musculación","market":"ES","categoria_inferida":"bandas_elasticas","n_reviews":1160,"mean_stars":4.4,"stars_pct":{"5":0.7,"4":0.14,"3":0.07,"2":0.03,"1":0.06},"lama_lb95":4.324,"lama_ub95":4.454,"prob_chasco":0.111,"fecha_ultima_review":"2025-11-06","top_pros":["material_correcto","buenas_para_entrenar","calidad_adecuada","ejercicio_en_casa","niveles_resistencia","accesorios_incluidos","rehabilitacion"],"top_contras":["tamano_ajuste_mejorable","niveles_resistencia","buenas_para_entrenar","calidad_adecuada","accesorios_incluidos","ejercicio_en_casa","material_correcto"],"tags_tematica":["bandas_elasticas","musculacion","entrenamiento_casa","rehabilitacion","niveles_resistencia","accesorios_incluidos","tamano_ajuste_mejorable","calidad_adecuada"]},
+
+{
+"asin": "B0CLLCDM7R",
+"nombre_producto": "Rodillo Abdominales Automático con Soportes",
+"market": "ES",
+"categoria_inferida": "rodillos_abdominales",
+"n_reviews": 603,
+"mean_stars": 4.4,
+"stars_pct": {
+"5": 0.76,
+"4": 0.08,
+"3": 0.06,
+"2": 0.03,
+"1": 0.07
+},
+"lama_lb95": 4.31,
+"lama_ub95": 4.49,
+"prob_chasco": 0.108,
+"fecha_ultima_review": "2025-11-04",
+"top_pros": [
+"montaje",
+"estabilidad",
+"calidad",
+"precio",
+"rebote_automático",
+"agarres",
+"almohadilla_rodillas"
+],
+"top_contras": [
+"temporizador",
+"marcas_en_suelo",
+"ruido",
+"estabilidad",
+"agarres",
+"montaje",
+"rebote_automático"
+],
+"tags_tematica": [
+"rodillo_abdominal",
+"entrenamiento_casa",
+"core_abdominal",
+"rebote_automatico",
+"montaje_sencillo",
+"buenos_agarres",
+"proteccion_rodillas",
+"temporizador_basico"
+]
+},
+
+{"asin": "B0DQD4NQX6", "nombre_producto": "Nourished Bodynskin Máscara Facial LED Terapia de Luz Azul y Roja Anti - Arrugas, Anti - Envejecimiento", "market": "ES", "categoria_inferida": "dispositivos_belleza_facial", "n_reviews": 114, "mean_stars": 4.5, "stars_pct": {"5": 0.69, "4": 0.23, "3": 0.04, "2": 0.0, "1": 0.04}, "lama_lb95": 4.34, "lama_ub95": 4.66, "prob_chasco": 0.06, "fecha_ultima_review": "2025-10-10", "top_pros": ["uso_sencillo", "sencillo_diseno", "diseno_comodo", "comodo_resultados", "resultados_graduales", "graduales_requiere", "requiere_constancia"], "top_contras": ["menciona_soporte", "soporte_tecnico", "tecnico_garantia", "garantia_rapida", "senalan_incidencias", "incidencias_puntuales", "puntuales_funcionamiento"], "tags_tematica": ["mascara_facial", "tratamiento_led", "cuidado_piel", "antiarrugas", "antiacne", "uso_domestico", "resultados_graduales", "uso_sencillo", "sencillo_diseno", "soporte_tecnico"]},
+
+{
+"asin": "B0DLMXQZKK",
+"nombre_producto": "ROLGNO Chaleco running",
+"market": "ES",
+"categoria_inferida": "chalecos_running",
+"n_reviews": 124,
+"mean_stars": 4.3,
+"stars_pct": {
+"5": 0.64,
+"4": 0.22,
+"3": 0.05,
+"2": 0.04,
+"1": 0.05
+},
+"lama_lb95": 4.109,
+"lama_ub95": 4.491,
+"prob_chasco": 0.089,
+"fecha_ultima_review": "2025-11-04",
+"top_pros": [
+"comodidad",
+"ajuste_estabilidad",
+"ligereza",
+"capacidad_bolsillos",
+"hidratacion",
+"calidad_materiales",
+"detalles_reflectantes"
+],
+"top_contras": [
+"capacidad_bolsillos",
+"calidad_materiales",
+"transpirabilidad",
+"relacion_calidad_precio",
+"talla_ajuste"
+],
+"tags_tematica": [
+"running",
+"trail_running",
+"chaleco_hidratacion",
+"alta_capacidad_bolsillos",
+"ligero",
+"detalles_reflectantes",
+"transpirabilidad_media",
+"relacion_calidad_precio",
+"uso_deporte_exterior"
+]
+},
+
+{
+"asin": "B0D317S1MZ",
+"nombre_producto": "Producto sin título",
+"market": "ES",
+"categoria_inferida": "terapia_luz_roja",
+"n_reviews": 187,
+"mean_stars": 4.4,
+"stars_pct": {
+"5": 0.76,
+"4": 0.07,
+"3": 0.06,
+"2": 0.04,
+"1": 0.07
+},
+"lama_lb95": 4.23,
+"lama_ub95": 4.57,
+"prob_chasco": 0.11,
+"fecha_ultima_review": "2025-09-08",
+"top_pros": [
+"calidad",
+"soporte_stand",
+"cara",
+"piel",
+"versatilidad",
+"carga",
+"dolor"
+],
+"top_contras": [
+"limitaciones",
+"carga",
+"controles",
+"bateria",
+"soporte_stand",
+"atencion_al_cliente",
+"seguridad"
+],
+"tags_tematica": [
+"terapia_luz_roja",
+"uso_cara",
+"uso_articulaciones",
+"alivio_dolor",
+"confort_en_la_piel",
+"calidad_de_construccion",
+"estabilidad_y_soporte",
+"bateria_y_carga",
+"fiabilidad_de_uso"
+]
+},
+
+{"asin":"B0D3XKRY2F","nombre_producto":"Auriculares Deportivos Inalámbricos Bluetooth 5.3 HiFi Estéreo","market":"ES","categoria_inferida":"auriculares_inalambricos","n_reviews":640,"mean_stars":4.4,"stars_pct":{"5":0.76,"4":0.11,"3":0.03,"2":0.02,"1":0.08},"lama_lb95":4.31,"lama_ub95":4.49,"prob_chasco":0.136,"fecha_ultima_review":"2025-10-15","top_pros":["sonido_bueno_nitido","ajuste_comodo","no_se_cae","bateria_muy_duradera","buena_relacion_calidad_precio","conexion_bluetooth_estable","buen_aislamiento_de_ruido"],"top_contras":["problemas_de_carga_autonomia","sonido_flojo_mejorable","molestias_en_la_oreja_ajuste_pobre","cortes_emparejamiento_inestable","fallo_por_agua_sudor","fallos_tempranos_durabilidad_baja","microfono_con_ruido_captacion_pobre"],"tags_tematica":["auriculares_inalambricos","uso_deportivo","sonido_bueno_nitido","ajuste_comodo","no_se_cae","bateria_muy_duradera","buena_relacion_calidad_precio","conexion_bluetooth_estable","buen_aislamiento_de_ruido","problemas_de_carga_autonomia"]},
+
+{
+"asin": "B0D1KCLVPX",
+"nombre_producto": "VACTechPro V15 Aspiradora sin Cable 35kPa",
+"market": "ES",
+"categoria_inferida": "aspiradoras_sin_cable",
+"n_reviews": 2635,
+"mean_stars": 4.4,
+"stars_pct": {
+"5": 0.72,
+"4": 0.14,
+"3": 0.05,
+"2": 0.02,
+"1": 0.07
+},
+"lama_lb95": 4.356,
+"lama_ub95": 4.444,
+"prob_chasco": 0.134,
+"fecha_ultima_review": "2025-10-28",
+"top_pros": [
+"potencia_de_succión",
+"batería_justa",
+"rendimiento_correcto",
+"uso_cómodo",
+"batería_adecuada",
+"depósito_y_filtros",
+"calidad_precio"
+],
+"top_contras": [
+"potencia_de_succión",
+"batería_justa",
+"potencia_justa",
+"batería_adecuada",
+"rendimiento_correcto",
+"uso_cómodo",
+"dudas_de_durabilidad"
+],
+"tags_tematica": [
+"potencia_de_succion",
+"bateria_y_autonomia",
+"ligereza_y_manejo",
+"relacion_calidadprecio",
+"limpieza_y_mantenimiento",
+"aspiradoras_sin_cable",
+"limpieza_hogar",
+"dudas_de_durabilidad",
+"servicio_postventa"
+]
+},
+
+{"asin": "B0F1TH8HGS", "nombre_producto": "AERLANG Pistola de Masaje Muscular con Calor", "market": "ES", "categoria_inferida": "pistolas_masaje", "n_reviews": 19626, "mean_stars": 4.4, "stars_pct": {"5": 0.72, "4": 0.15, "3": 0.05, "2": 0.02, "1": 0.06}, "lama_lb95": 4.38, "lama_ub95": 4.42, "prob_chasco": 0.08, "fecha_ultima_review": "2025-10-08", "top_pros": ["bateria_larga", "uso_sencillo", "potencia_adecuada", "varios_cabezales_utiles", "pantalla_informativa", "ruido_bajo", "cumple_funcion"], "top_contras": ["durabilidad_incierta", "ruido_alto_en_algunos_casos", "peso_aparato", "bateria_defectuosa_en_unidades_aisladas", "calidad_materiales_irregular"], "tags_tematica": ["pistolas_masaje", "recuperacion_muscular", "alivio_dolor", "uso_domestico", "bateria_larga", "varios_cabezales", "uso_sencillo", "ruido_bajo", "masaje_deportivo"]},
+
+{
+"asin": "B0F6CLT4WZ",
+"nombre_producto": "Arboleaf Bascula Inteligente con Bioimpedancia",
+"market": "ES",
+"categoria_inferida": "basculas_inteligentes",
+"n_reviews": 1401,
+"mean_stars": 4.5,
+"stars_pct": {
+"5": 0.73,
+"4": 0.15,
+"3": 0.05,
+"2": 0.02,
+"1": 0.05
+},
+"lama_lb95": 4.446,
+"lama_ub95": 4.554,
+"prob_chasco": 0.08,
+"fecha_ultima_review": "2025-10-09",
+"top_pros": [
+"app_con_sincronizacion",
+"mediciones_consistentes",
+"mediciones_de_composicion_corporal",
+"bluetooth",
+"wi_fi",
+"funcionalidad_y_uso_con_app",
+"perfiles_multiples"
+],
+"top_contras": [
+"exactitud_limitada_frente_a_equipos_profesionales",
+"instrucciones_poco_claras_idioma",
+"problemas_con_wi_fi_2",
+"cable_del_sensor_tenso"
+],
+"tags_tematica": [
+"bascula_inteligente",
+"bioimpedancia",
+"app_movil",
+"conectividad_bluetooth",
+"conectividad_wifi",
+"multiusuario",
+"mediciones_composicion_corporal",
+"exactitud_limitada",
+"instrucciones_poco_claras",
+"sensor_mano"
+]
+},
+
+{
+"asin": "B0F2DJV6SZ",
+"nombre_producto": "Aceitera Spray Pulverizador 470 mL",
+"market": "ES",
+"categoria_inferida": "aceiteras_spray",
+"n_reviews": 2212,
+"mean_stars": 4.6,
+"stars_pct": {
+"5": 0.78,
+"4": 0.14,
+"3": 0.01,
+"2": 0.01,
+"1": 0.06
+},
+"lama_lb95": 4.53,
+"lama_ub95": 4.61,
+"prob_chasco": 0.16,
+"fecha_ultima_review": "2025-11-21",
+"top_pros": [
+"no_gotea",
+"facilidad_uso",
+"diseno_y_capacidad",
+"calidad_materiales",
+"versatilidad_2_en_1",
+"facilidad_limpieza"
+],
+"top_contras": [
+"spray_inconsistente",
+"goteos_fugas",
+"mecanismo_se_rompe",
+"atascos_dispensador",
+"calidad_plastico_mejorable"
+],
+"tags_tematica": [
+"aceitera_spray",
+"cocina_diaria",
+"control_cantidad_aceite",
+"pulverizacion_y_chorro",
+"estanqueidad_y_goteos",
+"facilidad_uso",
+"materiales_vidrio",
+"diseno_moderno"
+]
+},
+
+{
+"asin": "B0FF525C1H",
+"nombre_producto": "Ninja CRISPi Freidora de aire portátil 3.8L",
+"market": "ES",
+"categoria_inferida": "freidoras_aire",
+"n_reviews": 861,
+"mean_stars": 4.5,
+"stars_pct": {
+"5": 0.75,
+"4": 0.13,
+"3": 0.04,
+"2": 0.04,
+"1": 0.04
+},
+"lama_lb95": 4.431,
+"lama_ub95": 4.569,
+"prob_chasco": 0.0801,
+"fecha_ultima_review": "2025-11-20",
+"top_pros": [
+"facil_uso",
+"resultados_coccion",
+"facil_limpieza",
+"buena_calidad",
+"diseno_compacto",
+"uso_diario"
+],
+"top_contras": [
+"falta_modo_horneado_especifico"
+],
+"tags_tematica": [
+"freidora_aire",
+"cocina_diaria",
+"cocina_saludable",
+"limpieza_facil",
+"facil_uso",
+"diseno_compacto",
+"rapidez_cocinado",
+"ideal_parejas",
+"ideal_regalo"
+]
+},
+
+{"asin": "B0F62VNR3Q", "nombre_producto": "LEFANT M3 Robot Aspirador y Fregasuelos", "market": "ES", "categoria_inferida": "robots_aspiradores", "n_reviews": 390, "mean_stars": 4.4, "stars_pct": {"5": 0.72, "4": 0.11, "3": 0.09, "2": 0.02, "1": 0.06}, "lama_lb95": 4.3, "lama_ub95": 4.52, "prob_chasco": 0.075, "fecha_ultima_review": "2025-10-02", "top_pros": ["potente", "succion", "mejorable", "soporte", "garantia", "util", "correcta"], "top_contras": ["correcto", "funcionamiento", "autonomia", "retorno", "base"], "tags_tematica": ["potente", "succion", "mejorable", "soporte", "garantia", "util", "correcto", "funcionamiento", "correcta", "autonomia"]},
+
+{"asin":"B07DLFP8Q5","nombre_producto":"Correa de sujeción tendón rotuliano (2 uds) cincha de descarga deportiva","market":"ES","categoria_inferida":"soportes_rodilla","n_reviews":877,"mean_stars":4.4,"stars_pct":{"5":0.65,"4":0.2,"3":0.09,"2":0.02,"1":0.04},"lama_lb95":4.332,"lama_ub95":4.466,"prob_chasco":0.119,"fecha_ultima_review":"2025-10-15","top_pros":["ajuste_con_velcro","soporte_rotuliano","alivio_del_dolor","material_calidad","comodidad","uso_en_deporte_caminar","relacion_calidad_precio"],"top_contras":["ajuste_con_velcro","soporte_rotuliano","alivio_del_dolor","durabilidad","uso_en_deporte_caminar","material_calidad","comodidad"],"tags_tematica":["tendon_rotuliano","dolor_rodilla","soporte_deportivo","ajuste_con_velcro","alivio_del_dolor","uso_en_deporte_caminar","durabilidad","comodidad"]},
+
+{"asin":"B01N1UX8RW","nombre_producto":"Composición Corporal Peso IMC Muscular","market":"ES","categoria_inferida":"basculas_composicion_corporal","n_reviews":346943,"mean_stars":4.5,"stars_pct":{"5":0.74,"4":0.16,"3":0.04,"2":0.01,"1":0.05},"lama_lb95":4.527,"lama_ub95":4.533,"prob_chasco":0.06,"fecha_ultima_review":"2025-10-18","top_pros":["app_movil","relacion_calidad_precio","precision_medidas","datos_detallados","conectividad_bluetooth","calidad_construccion"],"top_contras":["precision_peso_dudosa","app_movil_inestable","alto_consumo_pilas","conexion_bluetooth_irregular","bateria_limitada","calidad_materiales_mejorable","atencion_postventa_mejorable"],"tags_tematica":["bascula_inteligente","composicion_corporal","control_peso","app_movil","bluetooth","datos_detallados","hogar","multiusuario","precision_medidas","funciona_con_pilas"]},
+
+{"asin":"B01MS8DJ9P","nombre_producto":"POWERBREATHE Plus Black Edition — Aparato de entrenamiento de musculatura respiratoria","market":"ES","categoria_inferida":"entrenadores_respiratorios","n_reviews":266,"mean_stars":4.5,"stars_pct":{"5":0.66,"4":0.25,"3":0.05,"2":0.01,"1":0.03},"lama_lb95":4.319365932853163,"lama_ub95":4.637924566461991,"prob_chasco":0.065,"fecha_ultima_review":"2025-09-24","top_pros":["entrenamiento_respiratorio","capacidad_pulmonar","capacidad_respiratoria","fácil_usar","mejora_respiración","desmontar_limpiar","instrucciones_claras"],"top_contras":["precio_elevado","funcionamiento_básico","incomodidad_boca","problemas_regulación","falta_manual_alemán","difícil_limpiar","diseño_mejorable"],"tags_tematica":["entrenamiento_respiratorio","capacidad_pulmonar","rendimiento_deportivo","facilidad_uso","buenas_instrucciones","precio_elevado","difícil_limpiar","problemas_regulación","deportistas_avanzados"]},
+
+{"asin":"B07N8N6C85","nombre_producto":"Cosori Freidora Airfryer 5.5L 1700W","market":"ES","categoria_inferida":"freidoras_de_aire","n_reviews":85461,"mean_stars":4.7,"stars_pct":{"5":0.83,"4":0.13,"3":0.02,"2":0.0,"1":0.02},"lama_lb95":4.745,"lama_ub95":4.755,"prob_chasco":0.045,"fecha_ultima_review":"2025-10-10","top_pros":["resultados_coccion_crujiente_jugoso","manejo_sencillo_panel_programas","limpieza_facil_lavavajillas","capacidad_2_4_raciones","materiales_buena_calidad","funcionamiento_silencioso","medidas_seguridad_apagado_automatico"],"top_contras":["olores_fuertes_plastico_comida","pequenas_pegas_en_el_uso","riesgo_quema_o_sobrecoccion","problemas_durabilidad_y_fallos","posible_decepcion_esperando_freidora_tradicional"],"tags_tematica":["freidora_aire","cocina_rapida","cocina_saludable","hogar_familia_pequena","limpieza_facil","ruido_bajo","olores_fuertes","seguridad_apagado_automatico","uso_diario","capacidad_5l"]},
+
+{
+"asin": "B09CTVQWK8",
+"nombre_producto": "Fokky Bandas Elásticas Fitness (Set de 5 cintas",
+"market": "ES",
+"categoria_inferida": "bandas_elasticas_fitness",
+"n_reviews": 9512,
+"mean_stars": 4.4,
+"stars_pct": {
+"5": 0.68,
+"4": 0.18,
+"3": 0.08,
+"2": 0.03,
+"1": 0.03
+},
+"lama_lb95": 4.38,
+"lama_ub95": 4.42,
+"prob_chasco": 0.1,
+"fecha_ultima_review": "2025-10-23",
+"top_pros": [
+"calidad_material",
+"relacion_calidad_precio",
+"resistencias",
+"bolsa_transporte",
+"comodidad_uso",
+"olor_agradable"
+],
+"top_contras": [
+"resistencias",
+"durabilidad",
+"olor_desagradable",
+"bolsa_transporte",
+"tamaño",
+"longitud"
+],
+"tags_tematica": [
+"bandas_elasticas",
+"entreno_en_casa",
+"rehabilitacion",
+"relacion_calidad_precio",
+"resistencia_progresiva",
+"olor_material",
+"bolsa_transporte",
+"uso_principiantes",
+"uso_avanzado"
+]
+},
+
+{"asin": "B08DL4GQMG", "nombre_producto": "Cafetera automática De'Longhi Perfetto ECAM 23.460.SB", "market": "ES", "categoria_inferida": "cafeteras_automaticas", "n_reviews": 899, "mean_stars": 4.4, "stars_pct": {"5": 0.68, "4": 0.17, "3": 0.06, "2": 0.04, "1": 0.05}, "lama_lb95": 4.32, "lama_ub95": 4.46, "prob_chasco": 0.13, "fecha_ultima_review": "2025-08-26", "top_pros": ["sabor_del_cafe_crema", "facilidad_de_uso", "limpieza_mantenimiento", "consumo_deposito_de_agua", "fiabilidad_servicio", "ajustes_personalizacion"], "top_contras": ["sabor_del_cafe_crema", "espuma_de_leche", "fiabilidad_servicio", "consumo_deposito_de_agua", "ruido", "temperatura", "filtro_descalcificacion"], "tags_tematica": ["cafetera_automatica", "cafe_en_grano", "sabor_cafe", "espuma_de_leche", "facilidad_de_uso", "limpieza_mantenimiento", "consumo_agua_alto", "uso_intensivo_hogar"]},
+
+{
+"asin": "B08DKFHD7P",
+"nombre_producto": "Shearwater ordenador de buceo Research Peregrine",
+"market": "ES",
+"categoria_inferida": "ordenadores_buceo",
+"n_reviews": 369,
+"mean_stars": 4.8,
+"stars_pct": {
+"5": 0.89,
+"4": 0.07,
+"3": 0.01,
+"2": 0.01,
+"1": 0.02
+},
+"lama_lb95": 4.73,
+"lama_ub95": 4.87,
+"prob_chasco": 0.04,
+"fecha_ultima_review": "2025-10-26",
+"top_pros": [
+"pantalla_grande_y_legible",
+"sincronización_con_app_por_bluetooth",
+"facilidad_de_uso",
+"buena_autonomía",
+"alertas_vibración",
+"carga_inalámbrica_útil",
+"calidad_precio"
+],
+"top_contras": [
+"unidad_usada_recibida",
+"sincronización_con_app_por_bluetooth",
+"sin_integración_de_aire",
+"lente_propensa_a_arañazos",
+"sin_brújula",
+"sin_no_fly_time",
+"temporizador_no_funciona"
+],
+"tags_tematica": [
+"ordenador_buceo",
+"pantalla_grande_y_legible",
+"facilidad_de_uso",
+"buena_autonomía",
+"sincronización_con_app_por_bluetooth",
+"sin_integración_de_aire",
+"sin_brújula",
+"lente_propensa_a_arañazos",
+"unidad_usada_recibida"
+]
+},
+
+{
+"asin": "B07YG4QCN1",
+"nombre_producto": "BRITA Sistema de filtrado de agua ON TAP Pro V - MF incl. 1x cartucho filtrante (600L)",
+"market": "ES",
+"categoria_inferida": "filtros_agua_grifo",
+"n_reviews": 7816,
+"mean_stars": 4.4,
+"stars_pct": {
+"5": 0.72,
+"4": 0.14,
+"3": 0.04,
+"2": 0.02,
+"1": 0.08
+},
+"lama_lb95": 4.374,
+"lama_ub95": 4.426,
+"prob_chasco": 0.128,
+"fecha_ultima_review": "2025-10-05",
+"top_pros": [
+"mejora_sabor_agua",
+"reduccion_cloro_y_olores",
+"facilidad_instalacion",
+"compatibilidad_grifo",
+"indicador_litros_util",
+"ahorro_plastico_residuos"
+],
+"top_contras": [
+"eficacia_filtrado_cal_limitada",
+"mejora_sabor_insuficiente_en_algunos_casos",
+"duracion_cartucho_mas_corta_de_lo_esperado",
+"compatibilidad_grifo_no_universal",
+"reduccion_presion_caudal_agua",
+"materiales_plasticos_mejorables"
+],
+"tags_tematica": [
+"filtro_agua_grifo",
+"mejora_sabor_agua",
+"reduccion_cloro",
+"tratamiento_cal",
+"indicador_litros",
+"facil_instalacion",
+"ahorro_plastico",
+"hogar_uso_diario"
+]
+},
+
+{
+"asin": "B07Y21GMKQ",
+"nombre_producto": "LEPRO Linterna frontal",
+"market": "ES",
+"categoria_inferida": "linternas_frontales",
+"n_reviews": 18727,
+"mean_stars": 4.6,
+"stars_pct": {
+"5": 0.73,
+"4": 0.18,
+"3": 0.06,
+"2": 0.01,
+"1": 0.02
+},
+"lama_lb95": 4.578,
+"lama_ub95": 4.602,
+"prob_chasco": 0.081,
+"fecha_ultima_review": "2025-11-11",
+"top_pros": [
+"potencia_y_alcance",
+"bateria_y_recarga",
+"calidad_y_precio",
+"comodidad_y_ajuste",
+"modos_de_iluminacion"
+],
+"top_contras": [
+"potencia_y_alcance",
+"bateria_y_recarga",
+"comodidad_y_ajuste",
+"modos_de_iluminacion"
+],
+"tags_tematica": [
+"linterna_frontal",
+"potencia_y_alcance",
+"bateria_y_recarga",
+"calidad_y_precio",
+"comodidad_y_ajuste",
+"modos_de_iluminacion",
+"senderismo",
+"camping",
+"trabajo_nocturno"
+]
+},
+
+{"asin": "B07VGWX7GM", "nombre_producto": "SALOMON Chaleco running", "market": "ES", "categoria_inferida": "chalecos_hidratacion_running", "n_reviews": 1852, "mean_stars": 4.5, "stars_pct": {"5": 0.76, "4": 0.13, "3": 0.06, "2": 0.01, "1": 0.04}, "lama_lb95": 4.445, "lama_ub95": 4.555, "prob_chasco": 0.08, "fecha_ultima_review": "2025-06-29", "top_pros": ["comodidad_en_carrera", "bolsillos_y_capacidad", "sistema_de_hidratacion", "calidad_y_resistencia", "ajuste_y_estabilidad"], "top_contras": ["sabor_plastico_agua", "sujecion_botellas_mejorable", "precio_accesorios_alto", "mantenimiento_delicado", "no_incluye_manta_termica"], "tags_tematica": ["trail_running", "hidratacion_integrada", "alta_capacidad_bolsillos", "ajuste_estable", "ligero_y_comodo", "uso_carreras_montana", "precio_premium", "lavado_delicado"]},
+
+{
+"asin": "B098B22J3W",
+"nombre_producto": "Amonax Rodillo doble para abdominales + alfombrilla fitness + barras de flexiones + cuerda saltos comba",
+"market": "ES",
+"categoria_inferida": "rodillos_abdominales",
+"n_reviews": 21923,
+"mean_stars": 4.5,
+"stars_pct": {
+"5": 0.71,
+"4": 0.18,
+"3": 0.07,
+"2": 0.01,
+"1": 0.03
+},
+"lama_lb95": 4.49,
+"lama_ub95": 4.51,
+"prob_chasco": 0.09,
+"fecha_ultima_review": "2025-10-13",
+"top_pros": [
+"calidad",
+"core_abdominales",
+"precio",
+"montaje",
+"estabilidad",
+"agarre",
+"alfombrilla"
+],
+"top_contras": [
+"rodillas",
+"alfombrilla",
+"montaje",
+"estabilidad",
+"ruido",
+"peso",
+"materiales"
+],
+"tags_tematica": [
+"rodillos_abdominales",
+"entrenamiento_core",
+"uso_domestico",
+"proteccion_rodillas",
+"calidad_materiales",
+"montaje_sencillo",
+"estabilidad",
+"alfombrilla_incluida",
+"relacion_calidad_precio",
+"ruido_bajo"
+]
+},
+
+{
+"asin": "B095HJY2JJ",
+"nombre_producto": "Cecotec Deshumidificador Big Dry 4000 Expert Connected",
+"market": "ES",
+"categoria_inferida": "deshumidificadores",
+"n_reviews": 1265,
+"mean_stars": 4.3,
+"stars_pct": {
+"5": 0.66,
+"4": 0.15,
+"3": 0.08,
+"2": 0.04,
+"1": 0.07
+},
+"lama_lb95": 4.22,
+"lama_ub95": 4.36,
+"prob_chasco": 0.11,
+"fecha_ultima_review": "2025-10-09",
+"top_pros": [
+"capacidad_de_secado",
+"ruido_bajo",
+"facilidad_uso",
+"control_wifi_y_app",
+"relacion_calidad_precio",
+"tamano_compacto"
+],
+"top_contras": [
+"ruido_alto_en_modo_noche",
+"precio_alto",
+"configuracion_wifi_compleja",
+"peso_elevado",
+"rendimiento_limitado_en_estancias_grandes",
+"indicador_humedad_impreciso"
+],
+"tags_tematica": [
+"deshumidificador",
+"hogar_humedad_alta",
+"sotanos_y_banos",
+"control_wifi",
+"ruido_bajo",
+"uso_continuo",
+"hogar_mediano_grande",
+"eficiencia_energetica"
+]
+},
+
+{"asin": "B082B8WMBD", "nombre_producto": "CRESSI Donatello Diving Computer", "market": "ES", "categoria_inferida": "ordenadores_buceo", "n_reviews": 484, "mean_stars": 4.3, "stars_pct": {"5": 0.72, "4": 0.09, "3": 0.06, "2": 0.03, "1": 0.1}, "lama_lb95": 4.18, "lama_ub95": 4.42, "prob_chasco": 0.13, "fecha_ultima_review": "2025-10-28", "top_pros": ["facilidad_de_uso", "pantalla_visibilidad", "modos_apnea_nitrox", "conectividad_bluetooth", "durabilidad_calidad", "precio_valor", "tamano"], "top_contras": ["facilidad_de_uso", "pantalla_visibilidad", "tamano"], "tags_tematica": ["ordenador_buceo", "submarinismo_recreativo", "facilidad_de_uso", "pantalla_visibilidad", "modos_apnea_nitrox", "conectividad_bluetooth", "durabilidad_calidad", "precision_medicion"]},
+
+{"asin": "B0016BQFSS", "nombre_producto": "Sunny Health & Fitness Escalones para Ejercicio Cardio + Banda de Resistencia", "market": "ES", "categoria_inferida": "steppers_fitness", "n_reviews": 41908, "mean_stars": 4.3, "stars_pct": {"5": 0.67, "4": 0.17, "3": 0.08, "2": 0.02, "1": 0.06}, "lama_lb95": 4.289, "lama_ub95": 4.311, "prob_chasco": 0.12, "fecha_ultima_review": "2025-11-08", "top_pros": ["bandas_elasticas", "altura_regulable", "buen_entreno_en_casa", "cardio_ligero_en_casa", "robusto", "silencioso", "compacto"], "top_contras": ["pesado", "lubricacion_ocasional", "pantalla_basica", "app_con_videos"], "tags_tematica": ["cardio_en_casa", "entrenamiento_bajo_impacto", "bandas_elasticas", "app_con_videos", "altura_regulable", "compacto", "hogar_pequeno", "ruido_bajo", "mantenimiento_periodico", "peso_elevado"]}
+
+
+]
