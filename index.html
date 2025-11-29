@@ -28,7 +28,7 @@
 
     <style>
       body {
-        background: #fff7ed; /* naranja muy claro */
+        background: #fff7ed;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
           "Segoe UI", sans-serif;
       }
@@ -59,8 +59,6 @@
 
     <script type="text/babel">
       const { useState, useEffect } = React;
-
-      // --- Componentes auxiliares ---
 
       function LlamaBadge() {
         return (
@@ -305,11 +303,9 @@
         );
       }
 
-      // --- Componente principal App ---
-
       function App() {
         const [catalog, setCatalog] = useState([]);
-        const [catalogStatus, setCatalogStatus] = useState("loading"); // loading | ready | error
+        const [catalogStatus, setCatalogStatus] = useState("loading");
         const [catalogError, setCatalogError] = useState("");
 
         const [selected1, setSelected1] = useState(null);
@@ -317,15 +313,15 @@
         const [asin1, setAsin1] = useState("");
         const [asin2, setAsin2] = useState("");
 
-        const [metricsStatus, setMetricsStatus] = useState("idle"); // idle | loading | success | error
-        the [metricsError, setMetricsError] = useState("");
+        const [metricsStatus, setMetricsStatus] = useState("idle");
+        const [metricsError, setMetricsError] = useState("");
         const [metricsData, setMetricsData] = useState(null);
 
-        const [narrativeStatus, setNarrativeStatus] = useState("idle"); // idle | loading | success | error
+        const [narrativeStatus, setNarrativeStatus] = useState("idle");
         const [narrativeError, setNarrativeError] = useState("");
         const [narrativeText, setNarrativeText] = useState("");
 
-        // Cargar índice desde la función Netlify (GET con query, como espera el backend)
+        // Cargar índice desde verifymyth (GET ?mode=index)
         useEffect(() => {
           async function loadIndex() {
             try {
@@ -378,7 +374,8 @@
             if (!data.success) {
               throw new Error(data.error || "Error en comparativa de datos.");
             }
-            const [pA, pB] = data.products || [];
+            const products = data.products || [];
+            const [pA, pB] = products;
             setMetricsData({
               productA: pA,
               productB: pB,
@@ -426,7 +423,6 @@
         return (
           <div className="min-h-screen">
             <main className="max-w-5xl mx-auto px-4 py-10 md:py-16">
-              {/* Cabecera */}
               <header className="mb-10 md:mb-12 text-center">
                 <div className="flex justify-center mb-4">
                   <LlamaBadge />
@@ -452,7 +448,6 @@
                 )}
               </header>
 
-              {/* Selección de productos */}
               <section className="bg-amber-50/70 border border-amber-200 rounded-3xl p-4 md:p-6 mb-8">
                 <div className="grid md:grid-cols-2 gap-4 md:gap-6">
                   <ProductSelector
@@ -478,7 +473,6 @@
                   IA.
                 </p>
 
-                {/* Botones IA */}
                 <div className="mt-5 flex flex-col md:flex-row gap-3 justify-center">
                   <button
                     type="button"
@@ -524,7 +518,6 @@
                 </div>
               </section>
 
-              {/* Resultados comparativa de datos */}
               <section className="space-y-6">
                 {metricsStatus === "loading" && (
                   <div className="bg-white border border-slate-200 rounded-2xl p-6 text-sm text-slate-600 text-center fade-in">
@@ -629,7 +622,6 @@
                               <BulletList items={p.top_contras} tone="bad" />
                             </div>
 
-                            {/* CTA compra */}
                             <div className="mt-auto pt-2">
                               <a
                                 href={`https://thelamanest.com/es-${p.asin}`}
@@ -649,7 +641,6 @@
                   </>
                 )}
 
-                {/* Opinión final IA sobre blogs */}
                 {narrativeStatus === "loading" && (
                   <div className="bg-white border border-slate-200 rounded-2xl p-6 text-sm text-slate-700 text-center fade-in">
                     Leyendo las meta-reviews y preparando una opinión final...
