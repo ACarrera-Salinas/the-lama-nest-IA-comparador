@@ -10,6 +10,10 @@ const path = require("path");
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
+// Cargamos el índice LAMA como dependencia estática para que Netlify
+// lo incluya dentro del bundle de la función.
+const lamaIndex = require("./data/lama_index.json");
+
 // --- Utilidades comunes ---
 
 const corsHeaders = {
@@ -19,12 +23,14 @@ const corsHeaders = {
 };
 
 function loadIndex() {
-  const indexPath = path.join(__dirname, "data", "lama_index.json");
-  const raw = fs.readFileSync(indexPath, "utf-8");
-  const parsed = JSON.parse(raw);
+  const parsed = lamaIndex;
+
   if (Array.isArray(parsed)) return parsed;
   if (Array.isArray(parsed.products)) return parsed.products;
-  throw new Error("Formato inesperado en lama_index.json");
+
+  throw new Error(
+    "Formato inesperado en lama_index.json (se esperaba un array o { products: [] })"
+  );
 }
 
 async function callGemini(promptText) {
@@ -78,7 +84,10 @@ exports.handler = async (event) => {
     return {
       statusCode: 405,
       headers: corsHeaders,
-      body: JSON.stringify({ success: false, error: "Método no permitido" })
+      body: JSON.stringify({
+        success: false,
+        error: "Método no permitido"
+      })
     };
   }
 
@@ -92,7 +101,10 @@ exports.handler = async (event) => {
       return {
         statusCode: 400,
         headers: corsHeaders,
-        body: JSON.stringify({ success: false, error: "Falta 'mode' en la petición." })
+        body: JSON.stringify({
+          success: false,
+          error: "Falta 'mode' en la petición."
+        })
       };
     }
 
@@ -299,15 +311,14 @@ ${blogB}
         error: "Modo no reconocido. Usa 'index', 'metrics' o 'narrative'."
       })
     };
-} catch (err) {
-  console.error("Error general verifymyth:", err);
-
-  return {
-    statusCode: 500,
-    headers: corsHeaders,
-    body: JSON.stringify({
-      success: false,
-      error: "Error interno en verifymyth: " + (err.message || String(err))
+  } catch (err) {
+    console.error("Error general verifymyth:", err);
+    return {
+      statusCode: 500,
+      headers: corsHeaders,
+      body: JSON.stringify({
+        success: false,
+        error: "Error interno en verifymyth: " + (err.message || String(err))
       })
     };
   }
