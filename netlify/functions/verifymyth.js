@@ -36,10 +36,27 @@ function loadIndex() {
   return JSON.parse(raw);
 }
 
+function buildCatalogFromIndex(indexData) {
+  if (Array.isArray(indexData)) {
+    return indexData;
+  }
+  if (
+    indexData &&
+    typeof indexData === 'object' &&
+    Array.isArray(indexData.products)
+  ) {
+    return indexData.products;
+  }
+  if (indexData && typeof indexData === 'object') {
+    return Object.values(indexData);
+  }
+  return [];
+}
+
 function findProductMeta(indexData, asin) {
   if (!asin || !indexData) return null;
 
-  // 1) map por clave
+  // 1) objeto tipo diccionario
   if (!Array.isArray(indexData) && typeof indexData === 'object') {
     if (indexData[asin]) return indexData[asin];
 
@@ -132,32 +149,47 @@ exports.handler = async (event) => {
   }
 
   const params = event.queryStringParameters || {};
-  const mode = (params.mode || 'metrics').toLowerCase();
-  const asinA = (params.asinA || '').trim();
-  const asinB = (params.asinB || '').trim();
+
+  // Valores por defecto
+  let mode = (params.mode || 'metrics').toLowerCase();
+  let asinA = (params.asinA || '').trim();
+  let asinB = (params.asinB || '').trim();
+
+  // Si viene POST, leemos el body (para metrics y narrative)
+  if (event.httpMethod === 'POST' && event.body) {
+    try {
+      const body = JSON.parse(event.body);
+      if (body.mode) mode = String(body.mode).toLowerCase();
+      if (body.asinA) asinA = String(body.asinA).trim();
+      if (body.asinB) asinB = String(body.asinB).trim();
+    } catch (e) {
+      // Si hay error de parseo, simplemente seguimos con params
+      console.warn('No se pudo parsear el body JSON:', e);
+    }
+  }
 
   try {
-    if (!asinA || !asinB) {
-      throw new Error(
-        'Debes enviar asinA y asinB en la query (por ejemplo ?mode=metrics&asinA=XXX&asinB=YYY).'
-      );
-    }
-
-    // --- MODO INDEX: simple check del índice ---
+    // --- MODO INDEX: NO requiere asinA ni asinB ---
     if (mode === 'index') {
       const indexData = loadIndex();
-      const length = Array.isArray(indexData)
-        ? indexData.length
-        : Object.keys(indexData).length;
+      const catalog = buildCatalogFromIndex(indexData);
       return {
         statusCode: 200,
         headers: corsHeaders,
         body: JSON.stringify({
           success: true,
           mode: 'index',
-          entries: length,
+          entries: catalog.length,
+          products: catalog,
         }),
       };
+    }
+
+    // A partir de aquí (metrics, narrative) SÍ necesitamos asinA y asinB
+    if (!asinA || !asinB) {
+      throw new Error(
+        'Debes enviar asinA y asinB (p.ej. en el body JSON para metrics/narrative).'
+      );
     }
 
     // --- MODO METRICS: tarjetas + resumen rápido de la IA ---
@@ -198,14 +230,8 @@ ${JSON.stringify(productB)}
         body: JSON.stringify({
           success: true,
           mode: 'metrics',
-          products: {
-            A: productA,
-            B: productB,
-          },
-          analysis: {
-            quickSummary,
-          },
-          quickSummary,
+          products: [productA, productB],
+          analysis: quickSummary,
         }),
       };
     }
@@ -262,6 +288,7 @@ ${blogB}
           success: true,
           mode: 'narrative',
           finalOpinion,
+          text: finalOpinion,
           analysis: {
             finalOpinion,
           },
