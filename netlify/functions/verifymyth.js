@@ -155,7 +155,7 @@ exports.handler = async (event) => {
   const asinB = (queryParams.asinB || bodyParams.asinB || "").trim();
 
   try {
-    // --- MODO INDEX: devolver catálogo para el buscador por nombre ---
+    // --- MODO INDEX: devolver catálogo para buscador por nombre ---
     if (mode === "index") {
       const indexData = loadIndex();
 
