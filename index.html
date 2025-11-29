@@ -60,31 +60,35 @@
     <script type="text/babel">
       const { useState, useEffect } = React;
 
-      // ==========================
-      // Config logo comparador
-      // ==========================
-      const LAMA_BADGE_SIZE = 160; // tamaño del recuadro amarillo (px)
-      const LAMA_ICON_SIZE = 140;  // tamaño de la imagen interior (px)
-      const LAMA_ICON_URL =
-        "https://thelamanest.com/wp-content/uploads/2025/11/ChatGPT-Image-29-nov-2025-18_44_56.png";
+      // --- Ajustes de tamaño del badge Lama ---
+      // Si quieres cambiar el tamaño del icono, toca sólo estos 2 valores:
+      const LAMA_BADGE_SIZE_DESKTOP = { width: 160, height: 140 };
+      const LAMA_BADGE_SIZE_MOBILE = { width: 140, height: 120 };
 
       // --- Componentes auxiliares ---
 
       function LlamaBadge() {
         return (
-          <div
-            className="rounded-2xl bg-amber-200 flex items-center justify-center shadow-sm"
-            style={{ width: LAMA_BADGE_SIZE, height: LAMA_BADGE_SIZE }}
-          >
-            <img
-              src={LAMA_ICON_URL}
-              alt="Logo comparador IA de TheLamaNest"
-              style={{
-                width: LAMA_ICON_SIZE,
-                height: LAMA_ICON_SIZE,
-                objectFit: "contain",
-              }}
-            />
+          <div className="rounded-3xl bg-amber-200 flex items-center justify-center shadow-sm px-4 py-3">
+            <picture>
+              {/* Versión móvil */}
+              <source
+                srcSet="https://thelamanest.com/wp-content/uploads/2025/11/ChatGPT-Image-29-nov-2025-18_44_56.png"
+                media="(max-width: 767px)"
+              />
+              {/* Versión escritorio (usa el mismo src, sólo tamaño distinto) */}
+              <img
+                src="https://thelamanest.com/wp-content/uploads/2025/11/ChatGPT-Image-29-nov-2025-18_44_56.png"
+                alt="Lama comparando productos A y B"
+                style={{
+                  width: LAMA_BADGE_SIZE_DESKTOP.width,
+                  height: LAMA_BADGE_SIZE_DESKTOP.height,
+                  maxWidth: "100%",
+                  height: "auto",
+                }}
+                className="md:w-[160px] md:h-auto w-[140px]"
+              />
+            </picture>
           </div>
         );
       }
@@ -437,7 +441,7 @@
             const data = await res.json();
             if (!data.success) {
               throw new Error(
-                data.error || "Error generando la conclusión de la IA."
+                data.error || "Error generando la opinión de la IA."
               );
             }
             setNarrativeText(data.text || "");
@@ -489,8 +493,6 @@
                     onChangeAsin={setAsin1}
                     onSelectProduct={setSelected1}
                   />
-               
-
                   <ProductSelector
                     slot={2}
                     catalog={catalog}
@@ -506,7 +508,7 @@
                   IA.
                 </p>
 
-                {/* Botones IA (parte superior) */}
+                {/* Botones IA */}
                 <div className="mt-5 flex flex-col md:flex-row gap-3 justify-center">
                   <button
                     type="button"
@@ -546,7 +548,7 @@
                       2
                     </span>
                     {narrativeStatus === "loading"
-                      ? "Pidiendo conclusión al Lama..."
+                      ? "Pidiendo opinión al Lama..."
                       : "Conclusión final (IA)"}
                   </button>
                 </div>
@@ -581,139 +583,161 @@
                       </div>
                     )}
 
-                    {/* Botón Conclusión final justo debajo del resumen */}
-                    <div className="flex justify-center mt-2 mb-4">
-                      <button
-                        type="button"
-                        onClick={handleNarrativeClick}
-                        disabled={
-                          !canCompare ||
-                          metricsStatus !== "success" ||
-                          narrativeStatus === "loading"
-                        }
-                        className={
-                          "px-5 py-2.5 rounded-full text-sm font-semibold flex items-center justify-center gap-2 " +
-                          (canCompare && metricsStatus === "success"
-                            ? "bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200"
-                            : "bg-slate-200 text-slate-500 cursor-not-allowed")
-                        }
-                      >
-                        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/40 border border-white/60 text-[11px]">
-                          2
-                        </span>
-                        {narrativeStatus === "loading"
-                          ? "Pidiendo conclusión al Lama..."
-                          : "Conclusión final (IA)"}
-                      </button>
-                    </div>
-
                     <div className="grid md:grid-cols-2 gap-4 fade-in">
                       {[metricsData.productA, metricsData.productB].map(
-                        (p, idx) => (
-                          <div
-                            key={p.asin}
-                            className="bg-white border border-slate-200 rounded-2xl p-5 text-sm flex flex-col"
-                          >
-                            <div className="flex justify-between items-start mb-3">
-                              <div className="text-xs uppercase font-semibold text-slate-500 tracking-wide">
-                                {idx === 0 ? "Producto A" : "Producto B"}
+                        (p, idx) => {
+                          const lamasContentas =
+                            p.lamas_contentas_pct ?? p.lama_lb95;
+                          const lamasGrunonas =
+                            p.lamas_grunonas_pct ?? p.lama_ub95;
+
+                          const formatPct = (val) => {
+                            if (val == null) return null;
+                            if (typeof val === "number" && val < 1) {
+                              // si viene en 0–1, pásalo a 0–100
+                              return (val * 100).toFixed(0);
+                            }
+                            return val.toFixed ? val.toFixed(0) : val;
+                          };
+
+                          const lamasContentasText = formatPct(lamasContentas);
+                          const lamasGrunonasText = formatPct(lamasGrunonas);
+
+                          return (
+                            <div
+                              key={p.asin}
+                              className="bg-white border border-slate-200 rounded-2xl p-5 text-sm flex flex-col"
+                            >
+                              <div className="flex justify-between items-start mb-3">
+                                <div className="text-xs uppercase font-semibold text-slate-500 tracking-wide">
+                                  {idx === 0 ? "Producto A" : "Producto B"}
+                                </div>
+                                <div className="text-xs text-slate-500">
+                                  {p.market} · {p.categoria_inferida}
+                                </div>
                               </div>
-                              <div className="text-xs text-slate-500">
-                                {p.market} · {p.categoria_inferida}
+                              <div className="font-semibold text-slate-900 mb-1">
+                                {p.nombre_producto}
                               </div>
-                            </div>
-                            <div className="font-semibold text-slate-900 mb-1">
-                              {p.nombre_producto}
-                            </div>
-                            <div className="text-xs text-slate-500 mb-2">
-                              ASIN: {p.asin}
-                            </div>
-                            <div className="flex items-center gap-3 text-xs text-slate-700 mb-2">
-                              <span className="font-semibold">
-                                {p.mean_stars?.toFixed
-                                  ? p.mean_stars.toFixed(1)
-                                  : p.mean_stars}{" "}
-                                ★
-                              </span>
-                              <span className="text-slate-500">
-                                {p.n_reviews &&
-                                  `${p.n_reviews.toLocaleString(
-                                    "es-ES"
-                                  )} reseñas`}
-                              </span>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 mb-2">
-                              {p.lama_lb95 != null &&
-                                p.lama_ub95 != null && (
+                              <div className="text-xs text-slate-500 mb-2">
+                                ASIN: {p.asin}
+                              </div>
+                              <div className="flex items-center gap-3 text-xs text-slate-700 mb-2">
+                                <span className="font-semibold">
+                                  {p.mean_stars?.toFixed
+                                    ? p.mean_stars.toFixed(1)
+                                    : p.mean_stars}{" "}
+                                  ★
+                                </span>
+                                <span className="text-slate-500">
+                                  {p.n_reviews &&
+                                    `${p.n_reviews.toLocaleString(
+                                      "es-ES"
+                                    )} reseñas`}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 mb-2">
+                                {lamasContentasText !== null && (
                                   <span>
-                                    IC95% Lama: {p.lama_lb95.toFixed(2)}–{" "}
-                                    {p.lama_ub95.toFixed(2)}
+                                    Lamas contentas: {lamasContentasText}%
                                   </span>
                                 )}
-                              {p.prob_chasco != null && (
-                                <span>
-                                  · Prob. chasco:{" "}
-                                  {(p.prob_chasco * 100).toFixed(0)}%
-                                </span>
-                              )}
-                              {p.fecha_ultima_review && (
-                                <span>
-                                  · Última reseña: {p.fecha_ultima_review}
-                                </span>
-                              )}
-                            </div>
+                                {lamasGrunonasText !== null && (
+                                  <span>
+                                    {" "}
+                                    · Lamas gruñonas: {lamasGrunonasText}%
+                                  </span>
+                                )}
+                                {p.prob_chasco != null && (
+                                  <span>
+                                    {" "}
+                                    · Prob. chasco:{" "}
+                                    {(p.prob_chasco * 100).toFixed(0)}%
+                                  </span>
+                                )}
+                                {p.fecha_ultima_review && (
+                                  <span>
+                                    {" "}
+                                    · Última reseña: {p.fecha_ultima_review}
+                                  </span>
+                                )}
+                              </div>
 
-                            <div className="mt-3">
-                              <h3 className="text-xs font-semibold text-slate-800 mb-1">
-                                Distribución de estrellas
-                              </h3>
-                              <StarsRow product={p} />
-                            </div>
+                              <div className="mt-3">
+                                <h3 className="text-xs font-semibold text-slate-800 mb-1">
+                                  Distribución de estrellas
+                                </h3>
+                                <StarsRow product={p} />
+                              </div>
 
-                            <div className="mt-3">
-                              <h3 className="text-xs font-semibold text-emerald-800 mb-1">
-                                Lo que más suele gustar
-                              </h3>
-                              <BulletList items={p.top_pros} tone="good" />
-                            </div>
+                              <div className="mt-3">
+                                <h3 className="text-xs font-semibold text-emerald-800 mb-1">
+                                  Lo que más suele gustar
+                                </h3>
+                                <BulletList items={p.top_pros} tone="good" />
+                              </div>
 
-                            <div className="mt-3 mb-4">
-                              <h3 className="text-xs font-semibold text-rose-800 mb-1">
-                                Lo que suele dar problemas
-                              </h3>
-                              <BulletList items={p.top_contras} tone="bad" />
-                            </div>
+                              <div className="mt-3 mb-4">
+                                <h3 className="text-xs font-semibold text-rose-800 mb-1">
+                                  Lo que puede mejorar un poquito
+                                </h3>
+                                <BulletList items={p.top_contras} tone="bad" />
+                              </div>
 
-                            {/* CTA compra */}
-                            <div className="mt-auto pt-2">
-                              <a
-                                href={`https://thelamanest.com/es-${p.asin}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition-colors"
-                              >
-                                {idx === 0
-                                  ? "Comprar producto A"
-                                  : "Comprar producto B"}
-                              </a>
+                              {/* CTA compra */}
+                              <div className="mt-auto pt-2">
+                                <a
+                                  href={`https://thelamanest.com/es-${p.asin}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition-colors"
+                                >
+                                  {idx === 0
+                                    ? "Comprar producto A"
+                                    : "Comprar producto B"}
+                                </a>
+                              </div>
                             </div>
-                          </div>
-                        )
+                          );
+                        }
                       )}
                     </div>
+
+                    {metricsData.analysis && (
+                      <div className="flex justify-center mt-5">
+                        <button
+                          type="button"
+                          onClick={handleNarrativeClick}
+                          disabled={narrativeStatus === "loading"}
+                          className={
+                            "px-5 py-2.5 rounded-full text-sm font-semibold flex items-center justify-center gap-2 " +
+                            (narrativeStatus === "loading"
+                              ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+                              : "bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200")
+                          }
+                        >
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/40 border border-white/60 text-[11px]">
+                            2
+                          </span>
+                          {narrativeStatus === "loading"
+                            ? "Pidiendo opinión al Lama..."
+                            : "Conclusión final (IA)"}
+                        </button>
+                      </div>
+                    )}
                   </>
                 )}
 
-                {/* Conclusión final IA sobre blogs */}
+                {/* Opinión final IA sobre blogs */}
                 {narrativeStatus === "loading" && (
                   <div className="bg-white border border-slate-200 rounded-2xl p-6 text-sm text-slate-700 text-center fade-in">
-                    Leyendo las meta-reviews y preparando una conclusión final...
+                    Leyendo las meta-reviews y preparando una opinión final...
                   </div>
                 )}
 
                 {narrativeStatus === "error" && (
                   <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-sm text-red-700 fade-in">
-                    Ha habido un problema con la conclusión final de la IA:{" "}
+                    Ha habido un problema con la opinión final de la IA:{" "}
                     {narrativeError}
                   </div>
                 )}
