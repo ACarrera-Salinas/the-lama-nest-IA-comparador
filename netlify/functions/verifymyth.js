@@ -1,12 +1,14 @@
 const fs = require("fs");
 const path = require("path");
 
+// CORS básico
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
+// Rutas candidatas para carpeta data en Netlify
 const DATA_DIR_CANDIDATES = [
   path.join(__dirname, "data"),
   path.join(__dirname, "../data"),
@@ -15,6 +17,7 @@ const DATA_DIR_CANDIDATES = [
   "/var/data",
 ];
 
+// Localiza la carpeta data
 function getDataDir() {
   const tried = [];
   for (const dir of DATA_DIR_CANDIDATES) {
@@ -26,6 +29,7 @@ function getDataDir() {
   );
 }
 
+// Carga lama_index.json
 function loadIndex() {
   const dataDir = getDataDir();
   const indexPath = path.join(dataDir, "lama_index.json");
@@ -36,6 +40,7 @@ function loadIndex() {
   return JSON.parse(raw);
 }
 
+// Busca un producto concreto por ASIN dentro del índice
 function findProductMeta(indexData, asin) {
   if (!asin || !indexData) return null;
 
@@ -52,7 +57,7 @@ function findProductMeta(indexData, asin) {
     }
   }
 
-  // 3) Índice como array
+  // 3) Índice como array plano
   if (Array.isArray(indexData)) {
     return (
       indexData.find((x) => x.asin === asin || x.ASIN === asin) || null
@@ -62,6 +67,7 @@ function findProductMeta(indexData, asin) {
   return null;
 }
 
+// Carga la meta-review en texto
 function loadBlog(asin, lang = "ES") {
   if (!asin) return null;
   const dataDir = getDataDir();
@@ -75,6 +81,7 @@ function loadBlog(asin, lang = "ES") {
   return fs.readFileSync(blogPath, "utf8");
 }
 
+// Llamada a Gemini
 async function callGemini(prompt) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -123,7 +130,7 @@ async function callGemini(prompt) {
 }
 
 exports.handler = async (event) => {
-  // CORS preflight
+  // Preflight CORS
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
@@ -132,30 +139,30 @@ exports.handler = async (event) => {
     };
   }
 
-  // Parámetros GET (para mode=index)
+  // Parámetros GET y POST
   const queryParams = event.queryStringParameters || {};
-
-  // Parámetros POST (para metrics / narrative)
   let bodyParams = {};
   if (event.httpMethod === "POST" && event.body) {
     try {
       bodyParams = JSON.parse(event.body);
-    } catch {
+    } catch (e) {
+      console.error("Error parseando body JSON:", e);
       bodyParams = {};
     }
   }
 
-  const mode = (
-    queryParams.mode ||
-    bodyParams.mode ||
-    "metrics"
-  ).toLowerCase();
+  const rawMode = queryParams.mode || bodyParams.mode || "metrics";
+  const mode = String(rawMode).toLowerCase();
 
+  // Asins (solo necesarios para metrics / narrative)
   const asinA = (queryParams.asinA || bodyParams.asinA || "").trim();
   const asinB = (queryParams.asinB || bodyParams.asinB || "").trim();
 
   try {
-    // --- MODO INDEX: devolver catálogo para buscador por nombre ---
+    /*********************
+     * MODO INDEX (GET)
+     * Devuelve catálogo completo para buscador por nombre.
+     *********************/
     if (mode === "index") {
       const indexData = loadIndex();
 
@@ -164,11 +171,15 @@ exports.handler = async (event) => {
         products = indexData;
       } else if (Array.isArray(indexData.products)) {
         products = indexData.products;
-      } else if (typeof indexData === "object" && indexData !== null) {
+      } else if (
+        indexData &&
+        typeof indexData === "object" &&
+        !Array.isArray(indexData)
+      ) {
         products = Object.values(indexData);
       }
 
-      const length = products.length;
+      const entries = products.length;
 
       return {
         statusCode: 200,
@@ -176,31 +187,39 @@ exports.handler = async (event) => {
         body: JSON.stringify({
           success: true,
           mode: "index",
-          entries: length,
+          entries,
           products,
         }),
       };
     }
 
-    // A partir de aquí, todos los modos necesitan asinA y asinB
+    /*********************
+     * Delante solo para modes que comparan dos ASIN
+     *********************/
     if (!asinA || !asinB) {
       throw new Error(
         "Debes enviar asinA y asinB (por ejemplo asinA=XXX&asinB=YYY)."
       );
     }
+    if (asinA === asinB) {
+      throw new Error("Los dos productos deben ser distintos (ASIN diferentes).");
+    }
 
-    // --- MODO METRICS: tarjetas + resumen rápido centrado en datos ---
+    const indexData = loadIndex();
+    const productA = findProductMeta(indexData, asinA);
+    const productB = findProductMeta(indexData, asinB);
+
+    if (!productA || !productB) {
+      throw new Error(
+        `No se encontraron datos Lama para uno o ambos productos (${asinA}, ${asinB}).`
+      );
+    }
+
+    /*********************
+     * MODO METRICS
+     * Resumen rápido centrado en datos + productos A/B
+     *********************/
     if (mode === "metrics") {
-      const indexData = loadIndex();
-      const productA = findProductMeta(indexData, asinA);
-      const productB = findProductMeta(indexData, asinB);
-
-      if (!productA || !productB) {
-        throw new Error(
-          `No se encontraron datos Lama para uno o ambos productos (${asinA}, ${asinB}).`
-        );
-      }
-
       const quickSummaryPrompt = `
 Eres el asistente del Comparador Lama.
 
@@ -236,18 +255,11 @@ ${JSON.stringify(productB)}
       };
     }
 
-    // --- MODO NARRATIVE: opinión final corta, basada en meta-reviews ---
+    /*********************
+     * MODO NARRATIVE
+     * Opinión final corta basada en meta-reviews
+     *********************/
     if (mode === "narrative") {
-      const indexData = loadIndex();
-      const productA = findProductMeta(indexData, asinA);
-      const productB = findProductMeta(indexData, asinB);
-
-      if (!productA || !productB) {
-        throw new Error(
-          `No se encontraron datos Lama para uno o ambos productos (${asinA}, ${asinB}).`
-        );
-      }
-
       const blogA = loadBlog(asinA, "ES");
       const blogB = loadBlog(asinB, "ES");
 
@@ -292,7 +304,9 @@ ${blogB}
       };
     }
 
-    // --- modo desconocido ---
+    /*********************
+     * Modo no reconocido
+     *********************/
     return {
       statusCode: 400,
       headers: corsHeaders,
