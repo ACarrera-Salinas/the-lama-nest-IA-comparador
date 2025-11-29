@@ -1,0 +1,43 @@
+{
+  "asin": "B0B4SG34QP",
+  "nombre_producto": "Oral-B Vitality PRO Cepillo de Dientes Eléctrico",
+  "market": "ES",
+  "categoria_inferida": "cepillos_electricos",
+  "n_reviews": 399,
+  "mean_stars": 4.6,
+  "stars_pct": {
+    "5": 0.75,
+    "4": 0.16,
+    "3": 0.06,
+    "2": 0.01,
+    "1": 0.02
+  },
+  "lama_lb95": 4.53,
+  "lama_ub95": 4.69,
+  "prob_chasco": 0.1,
+  "fecha_ultima_review": "2025-10-26",
+  "top_pros": [
+    "limpieza",
+    "temporizador",
+    "precio",
+    "calidad",
+    "bateria"
+  ],
+  "top_contras": [
+    "bateria",
+    "limpieza",
+    "temporizador",
+    "potencia",
+    "carga"
+  ],
+  "tags_tematica": [
+    "cepillo_electrico",
+    "higiene_dental",
+    "limpieza_profunda",
+    "uso_diario",
+    "bateria_corta",
+    "precio_ajustado",
+    "viaje",
+    "temporizador_2_minutos"
+  ]
+}
