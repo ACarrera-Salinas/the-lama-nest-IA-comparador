@@ -188,6 +188,35 @@
             return;
           }
           onSelectProduct(product);
+          setQuery(product.nombre_producto || "");
+        };
+
+        const handleUseNameClick = () => {
+          const text = (query || "").trim().toLowerCase();
+          if (!text) return;
+          if (!catalog.length) return;
+
+          const candidates = catalog.filter((p) =>
+            (p.nombre_producto || "").toLowerCase().includes(text)
+          );
+          if (!candidates.length) {
+            alert(
+              "No encontramos ningún producto que contenga ese texto en el nombre. Prueba a ser más específico."
+            );
+            return;
+          }
+          const product = candidates[0];
+          onSelectProduct(product);
+          onChangeAsin(product.asin);
+          setQuery(product.nombre_producto || "");
+          setSuggestions([]);
+        };
+
+        const handleKeyDown = (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            handleUseNameClick();
+          }
         };
 
         return (
@@ -204,25 +233,27 @@
                 <label className="block text-xs font-medium text-slate-500 mb-1">
                   Busca por nombre, marca o modelo
                 </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-slate-300">
-                    🔍
-                  </span>
-                  <input
-                    type="text"
-                    className="w-full pl-8 pr-3 py-2 rounded-lg bg-amber-50 border border-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:bg-white text-sm"
-                    placeholder="Ej: Oral-B Pro 3..."
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        if (suggestions.length > 0) {
-                          handleSelect(suggestions[0]); // selecciona el primer sugerido
-                        }
-                      }
-                    }}
-                  />
+                <div className="relative flex gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-2.5 text-slate-300">
+                      🔍
+                    </span>
+                    <input
+                      type="text"
+                      className="w-full pl-8 pr-3 py-2 rounded-lg bg-amber-50 border border-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:bg-white text-sm"
+                      placeholder="Ej: Oral-B Pro 3..."
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleUseNameClick}
+                    className="px-3 py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-black transition-colors whitespace-nowrap"
+                  >
+                    Usar nombre
+                  </button>
                 </div>
                 <SuggestionsList items={suggestions} onSelect={handleSelect} />
               </div>
@@ -331,7 +362,7 @@
         const [narrativeError, setNarrativeError] = useState("");
         const [narrativeText, setNarrativeText] = useState("");
 
-        // Cargar índice desde la función Netlify (GET con query, como espera el backend)
+        // Cargar índice desde la función Netlify
         useEffect(() => {
           async function loadIndex() {
             try {
@@ -384,7 +415,6 @@
             if (!data.success) {
               throw new Error(data.error || "Error en comparativa de datos.");
             }
-
             const [pA, pB] = data.products || [];
             setMetricsData({
               productA: pA,
@@ -610,9 +640,7 @@
                                 </span>
                               )}
                               {p.fecha_ultima_review && (
-                                <span>
-                                  · Última reseña: {p.fecha_ultima_review}
-                                </span>
+                                <span>· Última reseña: {p.fecha_ultima_review}</span>
                               )}
                             </div>
 
