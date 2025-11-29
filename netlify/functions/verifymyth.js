@@ -16,18 +16,21 @@
 //   - Busca los dos productos por ASIN
 //   - Devuelve:
 //     { success: true, products: [productA, productB] }
+//     (incluyendo todos los campos Lama: market, stars_pct, lama_lb95, lama_ub95,
+//      fecha_ultima_review, top_pros, top_contras, etc.)
 //
 // MODE "narrative":
 //   - Lee netlify/functions/data/{asin}_ES_blog.txt para cada producto
-//   - Llama a Gemini con ambos textos
+//   - Llama a Gemini con ambos textos de blog/meta-review
 //   - Devuelve:
 //     { success: true, text: "..." }
 //
 // NOTA: asegúrate de que:
 //   - GEMINI_API_KEY está configurado en Netlify
-//   - netlify/functions/data/lama_index.json existe y tiene un array de objetos con:
-//       asin, nombre_producto, marca, categoria_inferida, precio,
-//       mean_stars, n_reviews, prob_chasco, tags_tematica, resumen_lama
+//   - netlify/functions/data/lama_index.json existe y tiene un array de objetos tipo Lama con:
+//       asin, nombre_producto, market, categoria_inferida,
+//       n_reviews, mean_stars, stars_pct, lama_lb95, lama_ub95,
+//       prob_chasco, fecha_ultima_review, top_pros, top_contras, tags_tematica, etc.
 //   - Para cada ASIN, existe un fichero {ASIN}_ES_blog.txt en la carpeta data.
 
 const fs = require('fs');
@@ -120,24 +123,23 @@ async function callGemini(prompt) {
 
 function buildNarrativePrompt(productA, productB, blogA, blogB) {
   return `
-Eres una IA experta en ayudar a usuarios a elegir entre dos productos de consumo basándote en meta-reviews largas.
+Eres una IA experta en ayudar a usuarios a elegir entre dos productos de consumo basándote en meta-reviews largas de TheLamaNest.
 
-Te doy información de dos productos (A y B) procedente de los blogs de TheLamaNest (resúmenes largos tipo meta-review).
+Te doy información de dos productos (A y B) procedente de los blogs/meta-reviews de TheLamaNest.
 Tu tarea:
 
-1. Leer el contexto de ambos productos.
+1. Leer el contexto de ambos productos (solo a partir de los textos de blog que te doy).
 2. Escribir SOLO un párrafo corto (6-10 líneas máximo) en español, muy claro y directo.
 3. Dar tu opinión comparativa:
    - Para quién encaja mejor el producto A.
    - Para quién encaja mejor el producto B.
 4. Terminar con una mini-conclusión clara donde, si tuvieras que elegir uno para la mayoría de usuarios, digas cuál sería y por qué, sin sonar agresivo, pero sí persuasivo.
-5. No repitas el texto del blog, sintetiza.
+5. No repitas textualmente frases largas del blog; sintetiza y prioriza lo que más pueda influir en la decisión.
 6. No uses formato markdown, solo texto plano.
 
 Producto A:
 ASIN: ${productA.asin}
 Nombre: ${productA.nombre_producto || ''}
-Marca: ${productA.marca || ''}
 
 Texto del blog A:
 -----------------
@@ -146,7 +148,6 @@ ${blogA}
 Producto B:
 ASIN: ${productB.asin}
 Nombre: ${productB.nombre_producto || ''}
-Marca: ${productB.marca || ''}
 
 Texto del blog B:
 -----------------
