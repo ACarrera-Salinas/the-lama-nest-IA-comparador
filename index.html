@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>TheLamaNest – Comparador Lama</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            lama: {
+              bg: '#faf5ee',
+              accent: '#fbbf24',
+              dark: '#0f172a',
+              soft: '#fef3c7'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-screen bg-lama-bg font-sans text-slate-900 selection:bg-amber-200/70 selection:text-slate-900 pb-20">
+  <!-- HEADER -->
+  <header class="w-full py-3 px-6 flex justify-between items-center bg-white/80 backdrop-blur border-b border-amber-100 sticky top-0 z-50">
+    <div class="flex items-center gap-2">
+      <div class="w-9 h-9 bg-lama-accent rounded-xl flex items-center justify-center text-lama-dark font-black text-xl shadow-sm">
+        L
+      </div>
+      <div class="flex flex-col leading-tight">
+        <span class="text-base font-semibold text-lama-dark tracking-tight">
+          TheLamaNest
+        </span>
+        <span class="text-[11px] uppercase tracking-[0.16em] text-slate-400 font-semibold">
+          Comparador Lama
+        </span>
+      </div>
+    </div>
+    <nav class="hidden md:flex items-center gap-3 text-xs font-medium text-slate-500">
+      <span class="px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100 flex items-center gap-1">
+        <span class="text-[13px]">✨</span> IA sobre reseñas reales
+      </span>
+    </nav>
+  </header>
+
+  <!-- HERO / SELECTORES -->
+  <main class="max-w-6xl mx-auto px-5 pt-14 md:pt-20 pb-10">
+    <section class="max-w-4xl mx-auto mb-12">
+      <div class="absolute inset-x-0 -top-24 h-64 bg-gradient-to-b from-amber-100/70 to-transparent pointer-events-none -z-10"></div>
+      <div class="text-center mb-8">
+        <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-lama-dark mb-4">
+          Compara <span class="text-lama-accent">cara a cara</span> dos productos Lama.
+        </h1>
+        <p class="text-base md:text-lg text-slate-600 max-w-2xl mx-auto">
+          Elige dos productos que ya tengan meta-review en TheLamaNest y deja que la IA te ayude a decidir cuál encaja mejor contigo.
+        </p>
+      </div>
+
+      <!-- SELECTOR DOBLE -->
+      <div class="bg-white/90 backdrop-blur p-4 md:p-5 rounded-2xl shadow-[0_18px_40px_rgba(15,23,42,0.10)] border border-amber-100">
+        <div class="grid md:grid-cols-2 gap-4">
+          <!-- PRODUCTO 1 -->
+          <div class="border border-amber-100 rounded-xl p-3 md:p-4 bg-amber-50/40">
+            <h2 class="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-lama-accent text-xs flex items-center justify-center text-lama-dark font-bold">1</span>
+              Producto 1
+            </h2>
+
+            <label class="block text-[11px] text-slate-500 mb-1">Busca por nombre, marca o modelo</label>
+            <div class="relative mb-3">
+              <span class="absolute left-3 top-2.5 text-slate-300 text-sm">🔍</span>
+              <input
+                id="searchA"
+                type="text"
+                placeholder="Ej: Oral-B Pro 3..."
+                class="w-full pl-8 pr-3 py-2.5 bg-white rounded-lg border border-transparent focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none text-sm"
+                autocomplete="off"
+              />
+              <div id="suggestionsA"
+                class="absolute mt-1 left-0 right-0 bg-white rounded-lg border border-slate-200 shadow-lg max-h-56 overflow-auto hidden z-20 text-sm">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="block text-[11px] text-slate-500 mb-1">
+                ¿Vienes de Amazon o ya conoces el código?
+              </label>
+              <div class="flex gap-2">
+                <input
+                  id="asinA"
+                  type="text"
+                  placeholder="Pega aquí el ASIN (opcional)"
+                  class="flex-1 px-3 py-2 bg-white rounded-lg border border-transparent focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none text-xs md:text-sm"
+                />
+                <button
+                  id="asinABtn"
+                  type="button"
+                  class="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-800">
+                  Usar ASIN
+                </button>
+              </div>
+            </div>
+
+            <div id="selectedA" class="text-xs text-slate-500">
+              <span class="italic">Todavía no has seleccionado ningún producto.</span>
+            </div>
+          </div>
+
+          <!-- PRODUCTO 2 -->
+          <div class="border border-amber-100 rounded-xl p-3 md:p-4 bg-amber-50/40">
+            <h2 class="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-lama-accent text-xs flex items-center justify-center text-lama-dark font-bold">2</span>
+              Producto 2
+            </h2>
+
+            <label class="block text-[11px] text-slate-500 mb-1">Busca por nombre, marca o modelo</label>
+            <div class="relative mb-3">
+              <span class="absolute left-3 top-2.5 text-slate-300 text-sm">🔍</span>
+              <input
+                id="searchB"
+                type="text"
+                placeholder="Ej: Philips Sonicare..."
+                class="w-full pl-8 pr-3 py-2.5 bg-white rounded-lg border border-transparent focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none text-sm"
+                autocomplete="off"
+              />
+              <div id="suggestionsB"
+                class="absolute mt-1 left-0 right-0 bg-white rounded-lg border border-slate-200 shadow-lg max-h-56 overflow-auto hidden z-20 text-sm">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="block text-[11px] text-slate-500 mb-1">
+                ¿Vienes de Amazon o ya conoces el código?
+              </label>
+              <div class="flex gap-2">
+                <input
+                  id="asinB"
+                  type="text"
+                  placeholder="Pega aquí el ASIN (opcional)"
+                  class="flex-1 px-3 py-2 bg-white rounded-lg border border-transparent focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none text-xs md:text-sm"
+                />
+                <button
+                  id="asinBBtn"
+                  type="button"
+                  class="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-800">
+                  Usar ASIN
+                </button>
+              </div>
+            </div>
+
+            <div id="selectedB" class="text-xs text-slate-500">
+              <span class="italic">Todavía no has seleccionado ningún producto.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTONES IA -->
+        <div class="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <p id="compareHint" class="text-[11px] text-slate-500">
+            Selecciona dos productos distintos para activar los botones de IA.
+          </p>
+          <div class="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+            <button
+              id="compareMetricsBtn"
+              type="button"
+              disabled
+              class="bg-lama-dark hover:bg-black text-white font-semibold py-2.5 px-5 rounded-xl transition-colors w-full md:w-auto flex items-center justify-center gap-2 text-xs md:text-sm disabled:opacity-60 disabled:cursor-not-allowed">
+              <span>1️⃣ Comparativa de datos (IA)</span>
+            </button>
+            <button
+              id="compareNarrativeBtn"
+              type="button"
+              disabled
+              class="bg-white hover:bg-slate-50 text-slate-900 font-semibold py-2.5 px-5 rounded-xl border border-slate-200 transition-colors w-full md:w-auto flex items-center justify-center gap-2 text-xs md:text-sm disabled:opacity-40 disabled:cursor-not-allowed">
+              <span>2️⃣ Opinión final (IA)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULTADOS -->
+    <section id="resultsSection" class="min-h-[280px]">
+      <!-- Estado inicial -->
+      <div id="initialState" class="max-w-xl mx-auto text-center py-10 text-sm text-slate-600">
+        <div class="w-16 h-16 rounded-2xl bg-lama-soft border border-amber-200 mx-auto mb-4 flex items-center justify-center">
+          <span class="text-2xl">🦙</span>
+        </div>
+        <h3 class="text-lg font-semibold text-slate-900 mb-2">
+          Elige dos productos Lama para ver la comparativa.
+        </h3>
+        <p>
+          Busca por nombre o pega el ASIN de dos productos que ya tengan meta-review en TheLamaNest y luego pulsa “Comparativa de datos (IA)”.
+        </p>
+      </div>
+
+      <!-- Loading general -->
+      <div id="loadingState" class="hidden py-10">
+        <div class="text-center mb-6">
+          <h3 class="text-lg font-semibold text-slate-900 mb-1" id="loadingTitle">
+            Preparando la comparativa…
+          </h3>
+          <p class="text-sm text-slate-500" id="loadingSubtitle">
+            La IA está leyendo tus datos Lama para construir el cara a cara.
+          </p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-5">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 animate-pulse space-y-3">
+            <div class="h-3 w-20 bg-slate-200 rounded-full"></div>
+            <div class="h-4 w-full bg-slate-200 rounded-lg"></div>
+            <div class="h-4 w-2/3 bg-slate-200 rounded-lg"></div>
+            <div class="h-5 w-24 bg-slate-200 rounded-full"></div>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 animate-pulse space-y-3">
+            <div class="h-3 w-20 bg-slate-200 rounded-full"></div>
+            <div class="h-4 w-full bg-slate-200 rounded-lg"></div>
+            <div class="h-4 w-2/3 bg-slate-200 rounded-lg"></div>
+            <div class="h-5 w-24 bg-slate-200 rounded-full"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultados comparativa -->
+      <div id="comparisonContent" class="hidden">
+        <!-- Cards -->
+        <div class="mb-10">
+          <h2 class="text-xl md:text-2xl font-bold text-slate-900 mb-4">
+            Cara a cara entre tus dos productos
+          </h2>
+          <div id="cardsContainer" class="grid md:grid-cols-2 gap-6">
+          </div>
+        </div>
+
+        <!-- Tabla comparativa -->
+        <div class="mb-10">
+          <h3 class="text-lg font-bold text-slate-900 mb-3">
+            Comparativa rápida
+          </h3>
+          <div class="overflow-hidden rounded-2xl border border-slate-200 shadow-sm bg-white">
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs text-left" id="comparisonTable">
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metodología -->
+        <section class="mt-8 bg-amber-50/70 rounded-2xl p-6 md:p-8 border border-amber-100">
+          <h3 class="text-lg md:text-xl font-bold text-slate-900 mb-5 flex items-center gap-2">
+            <span class="text-amber-500 text-xl">📊</span>
+            ¿Qué tiene en cuenta el Comparador Lama?
+          </h3>
+          <div class="grid md:grid-cols-3 gap-5 text-sm text-slate-700">
+            <div>
+              <h4 class="font-semibold text-slate-900 mb-1.5">Estrellas con contexto</h4>
+              <p>No miramos solo la media. Se da peso a cuántas personas opinan y cómo son las malas experiencias.</p>
+            </div>
+            <div>
+              <h4 class="font-semibold text-slate-900 mb-1.5">Probabilidad de chasco</h4>
+              <p>Las reseñas de 1–2 estrellas cuentan mucho: si hay patrón de “se rompe al mes” o “no limpia nada”, la IA lo pone encima de la mesa.</p>
+            </div>
+            <div>
+              <h4 class="font-semibold text-slate-900 mb-1.5">Contexto de uso</h4>
+              <p>En la versión completa se tendrá en cuenta también el contexto de uso (viaje, encías sensibles, mascotas…) para ajustar la recomendación.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Opinión narrativa IA -->
+        <section class="mt-10" id="narrativeSection">
+          <h3 class="text-lg md:text-xl font-bold text-slate-900 mb-3">
+            Opinión final de la IA Lama
+          </h3>
+          <p class="text-xs text-slate-500 mb-3">
+            Este texto se basa en la comparativa de los blogs/meta-reviews. El objetivo es ayudarte a tomar una decisión clara.
+          </p>
+
+          <!-- Loading narrativo -->
+          <div id="narrativeLoading" class="hidden bg-white border border-slate-200 rounded-2xl p-4 text-sm text-slate-600">
+            <div class="animate-pulse flex flex-col gap-2">
+              <div class="h-3 w-24 bg-slate-200 rounded-full"></div>
+              <div class="h-3 w-full bg-slate-200 rounded-full"></div>
+              <div class="h-3 w-4/5 bg-slate-200 rounded-full"></div>
+              <div class="h-3 w-2/3 bg-slate-200 rounded-full"></div>
+            </div>
+          </div>
+
+          <!-- Contenido narrativo -->
+          <div id="narrativeContent" class="bg-white border border-slate-200 rounded-2xl p-4 text-sm text-slate-700 hidden">
+          </div>
+
+          <!-- Mensaje vacío -->
+          <div id="narrativeEmpty" class="text-sm text-slate-500">
+            Aún no has pedido la opinión final de la IA. Una vez tengas la comparativa de datos, pulsa “Opinión final (IA)” para ver una recomendación corta y persuasiva.
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <!-- JS -->
+  <script>
+    // --- MOCK CATALOG LAMA ---
+    // Sustituye este array por un fetch a tu lama_index.json o lama_catalog.json cuando lo tengas
+    const CATALOG = [
+      {
+        asin: "B0B4SG34QP",
+        nombre_producto: "Oral-B Pro 3 3000 Sensi Ultrathin",
+        marca: "Oral-B",
+        categoria_inferida: "cepillos_electricos",
+        precio: 39.95,
+        mean_stars: 4.6,
+        n_reviews: 1240,
+        prob_chasco: 0.04,
+        tags_tematica: ["encías_sensibles", "bateria_li-ion", "sensor_presión"]
+      },
+      {
+        asin: "B07B756S34",
+        nombre_producto: "Philips Sonicare ProtectiveClean 4300",
+        marca: "Philips",
+        categoria_inferida: "cepillos_electricos",
+        precio: 45.00,
+        mean_stars: 4.4,
+        n_reviews: 850,
+        prob_chasco: 0.09,
+        tags_tematica: ["sónico", "blanqueamiento", "viaje"]
+      },
+      {
+        asin: "B09C3X43L1",
+        nombre_producto: "Oclean X Pro Elite",
+        marca: "Oclean",
+        categoria_inferida: "cepillos_electricos",
+        precio: 59.90,
+        mean_stars: 4.2,
+        n_reviews: 320,
+        prob_chasco: 0.15,
+        tags_tematica: ["pantalla_táctil", "app_inteligente", "silencioso"]
+      },
+      {
+        asin: "RBT123ASP",
+        nombre_producto: "Roborock Q7 Max+",
+        marca: "Roborock",
+        categoria_inferida: "robots_aspiradores",
+        precio: 499.00,
+        mean_stars: 4.5,
+        n_reviews: 2100,
+        prob_chasco: 0.07,
+        tags_tematica: ["mascotas", "alfombras", "autovaciado"]
+      }
+    ];
+
+    // --- STATE ---
+    let selectedA = null;
+    let selectedB = null;
+    let metricsLoaded = false;
+
+    const searchA = document.getElementById('searchA');
+    const searchB = document.getElementById('searchB');
+    const suggestionsA = document.getElementById('suggestionsA');
+    const suggestionsB = document.getElementById('suggestionsB');
+    const asinAInput = document.getElementById('asinA');
+    const asinBInput = document.getElementById('asinB');
+    const asinABtn = document.getElementById('asinABtn');
+    const asinBBtn = document.getElementById('asinBBtn');
+    const selectedADiv = document.getElementById('selectedA');
+    const selectedBDiv = document.getElementById('selectedB');
+
+    const compareMetricsBtn = document.getElementById('compareMetricsBtn');
+    const compareNarrativeBtn = document.getElementById('compareNarrativeBtn');
+    const compareHint = document.getElementById('compareHint');
+
+    const initialState = document.getElementById('initialState');
+    const loadingState = document.getElementById('loadingState');
+    const loadingTitle = document.getElementById('loadingTitle');
+    const loadingSubtitle = document.getElementById('loadingSubtitle');
+    const comparisonContent = document.getElementById('comparisonContent');
+    const cardsContainer = document.getElementById('cardsContainer');
+    const comparisonTable = document.getElementById('comparisonTable');
+
+    const narrativeLoading = document.getElementById('narrativeLoading');
+    const narrativeContent = document.getElementById('narrativeContent');
+    const narrativeEmpty = document.getElementById('narrativeEmpty');
+
+    // --- HELPERS UI ---
+    function showInitial() {
+      initialState.classList.remove('hidden');
+      loadingState.classList.add('hidden');
+      comparisonContent.classList.add('hidden');
+    }
+
+    function showLoading(mode) {
+      initialState.classList.add('hidden');
+      if (mode === 'metrics') {
+        loadingTitle.textContent = 'Preparando la comparativa…';
+        loadingSubtitle.textContent = 'La IA está leyendo tus datos Lama para construir el cara a cara.';
+        loadingState.classList.remove('hidden');
+        comparisonContent.classList.add('hidden');
+      }
+    }
+
+    function showComparison() {
+      initialState.classList.add('hidden');
+      loadingState.classList.add('hidden');
+      comparisonContent.classList.remove('hidden');
+    }
+
+    function getFilteredCatalog(term) {
+      const lower = term.toLowerCase();
+      return CATALOG.filter(p => {
+        if (!lower) return true;
+        const text = (p.nombre_producto + ' ' + p.marca + ' ' + p.asin).toLowerCase();
+        return text.includes(lower);
+      }).slice(0, 10);
+    }
+
+    function renderSuggestions(list, container, which) {
+      container.innerHTML = '';
+      if (!list.length) {
+        container.classList.add('hidden');
+        return;
+      }
+      list.forEach(p => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'w-full text-left px-3 py-2 hover:bg-amber-50 text-xs border-b last:border-b-0 border-slate-100 flex flex-col';
+        item.innerHTML = `
+          <span class="font-semibold text-slate-900">${p.nombre_producto}</span>
+          <span class="text-[11px] text-slate-500">${p.marca}</span>
+          <span class="text-[11px] text-slate-400">ASIN: ${p.asin}</span>
+        `;
+        item.addEventListener('click', () => {
+          selectProduct(p, which);
+          container.classList.add('hidden');
+        });
+        container.appendChild(item);
+      });
+      container.classList.remove('hidden');
+    }
+
+    function selectProduct(p, which) {
+      if (which === 'A') {
+        if (selectedB && selectedB.asin === p.asin) {
+          alert('Para comparar necesitas dos productos distintos.');
+          return;
+        }
+        selectedA = p;
+        searchA.value = p.nombre_producto;
+        asinAInput.value = p.asin;
+        selectedADiv.innerHTML = renderSelectedCardHTML(p);
+      } else {
+        if (selectedA && selectedA.asin === p.asin) {
+          alert('Para comparar necesitas dos productos distintos.');
+          return;
+        }
+        selectedB = p;
+        searchB.value = p.nombre_producto;
+        asinBInput.value = p.asin;
+        selectedBDiv.innerHTML = renderSelectedCardHTML(p);
+      }
+      metricsLoaded = false;
+      narrativeContent.classList.add('hidden');
+      narrativeEmpty.classList.remove('hidden');
+      updateCompareButtons();
+    }
+
+    function renderSelectedCardHTML(p) {
+      return `
+        <div class="mt-1 p-2.5 bg-white rounded-lg border border-amber-100 text-[11px] flex flex-col gap-1">
+          <div class="flex justify-between items-center">
+            <span class="font-semibold text-slate-900">${p.nombre_producto}</span>
+            <span class="text-[10px] text-slate-400">ASIN: ${p.asin}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-500">${p.marca}</span>
+            <span class="text-[11px] text-slate-500">${p.mean_stars.toFixed(1)} ★ (${p.n_reviews})</span>
+          </div>
+          <div class="flex flex-wrap gap-1 mt-1">
+            ${(p.tags_tematica || []).slice(0,3).map(tag => `
+              <span class="px-2 py-0.5 bg-amber-50 text-amber-800 rounded-full border border-amber-100">
+                #${tag}
+              </span>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function updateCompareButtons() {
+      const canCompare = selectedA && selectedB && selectedA.asin !== selectedB.asin;
+      compareMetricsBtn.disabled = !canCompare;
+      compareNarrativeBtn.disabled = !canCompare || !metricsLoaded;
+
+      if (!canCompare) {
+        compareHint.textContent = 'Selecciona dos productos distintos para activar los botones de IA.';
+      } else if (!metricsLoaded) {
+        compareHint.textContent = 'Ya puedes lanzar la comparativa de datos (IA). La opinión final se activará después.';
+      } else {
+        compareHint.textContent = 'Puedes volver a lanzar la comparativa o pedir otra opinión final cuando quieras.';
+      }
+    }
+
+    function probChascoBadge(prob) {
+      if (prob > 0.15) return 'Alto riesgo de chasco';
+      if (prob > 0.08) return 'Riesgo moderado de chasco';
+      return 'Baja probabilidad de chasco';
+    }
+
+    function renderCardsFromAPI(products) {
+      cardsContainer.innerHTML = '';
+      products.forEach(p => {
+        const card = document.createElement('article');
+        card.className = 'relative flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm p-4 md:p-5';
+        card.innerHTML = `
+          <div class="flex justify-between items-start gap-2 mb-3">
+            <div>
+              <div class="text-[11px] text-slate-400 uppercase tracking-[0.14em]">
+                ${(p.categoria_inferida || '').replace('_',' ')}
+              </div>
+              <h3 class="text-sm md:text-base font-bold text-slate-900 leading-snug mt-1">
+                ${p.nombre_producto}
+              </h3>
+              <p class="text-[11px] text-slate-500">${p.marca || ''}</p>
+            </div>
+            <div class="flex flex-col items-end gap-1">
+              <div class="flex items-center gap-1.5">
+                <span class="text-amber-400">★</span>
+                <span class="font-semibold text-slate-900 text-sm">${(p.mean_stars ?? 0).toFixed(1)}</span>
+                <span class="text-[11px] text-slate-400">(${p.n_reviews ?? 0})</span>
+              </div>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-800 rounded-full border border-amber-100 text-[10px]">
+                ${probChascoBadge(p.prob_chasco ?? 0)}
+              </span>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1 mb-2">
+            ${(p.tags_tematica || []).slice(0,3).map(tag => `
+              <span class="px-2 py-0.5 bg-amber-50 text-amber-800 text-[10px] rounded-full border border-amber-100">
+                #${tag}
+              </span>
+            `).join('')}
+          </div>
+          <p class="text-xs text-slate-700 bg-slate-50 border border-slate-100 rounded-xl p-3 leading-relaxed">
+            <span class="font-semibold text-[11px] uppercase tracking-[0.12em] block mb-1">Resumen Lama</span>
+            ${p.resumen_lama || 'La IA usará aquí el resumen de tu meta-review para este producto.'}
+          </p>
+          <div class="mt-3 flex justify-between items-center text-xs">
+            <span class="text-slate-500">Precio orientativo ~${(p.precio ?? 0).toFixed(0)}€</span>
+            <span class="text-slate-400">ASIN: ${p.asin}</span>
+          </div>
+        `;
+        cardsContainer.appendChild(card);
+      });
+    }
+
+    function renderTableFromAPI(products) {
+      const [a, b] = products;
+      comparisonTable.innerHTML = `
+        <thead class="bg-slate-50 text-slate-500 font-semibold uppercase tracking-[0.12em]">
+          <tr>
+            <th class="px-5 py-3 min-w-[140px]">Criterio</th>
+            <th class="px-5 py-3 min-w-[200px]">${a.nombre_producto}</th>
+            <th class="px-5 py-3 min-w-[200px]">${b.nombre_producto}</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <tr>
+            <td class="px-5 py-3 font-semibold text-slate-900">Calidad (estrellas)</td>
+            <td class="px-5 py-3 text-sm">${(a.mean_stars ?? 0).toFixed(1)} ★ (${a.n_reviews ?? 0})</td>
+            <td class="px-5 py-3 text-sm">${(b.mean_stars ?? 0).toFixed(1)} ★ (${b.n_reviews ?? 0})</td>
+          </tr>
+          <tr>
+            <td class="px-5 py-3 font-semibold text-slate-900">Probabilidad de chasco</td>
+            <td class="px-5 py-3 font-mono text-[11px]">${((a.prob_chasco ?? 0) * 100).toFixed(0)}%</td>
+            <td class="px-5 py-3 font-mono text-[11px]">${((b.prob_chasco ?? 0) * 100).toFixed(0)}%</td>
+          </tr>
+          <tr>
+            <td class="px-5 py-3 font-semibold text-slate-900 align-top">Resumen Lama</td>
+            <td class="px-5 py-3 align-top text-xs text-slate-700">${a.resumen_lama || ''}</td>
+            <td class="px-5 py-3 align-top text-xs text-slate-700">${b.resumen_lama || ''}</td>
+          </tr>
+        </tbody>
+      `;
+    }
+
+    // --- IA: llamadas a backend ---
+    async function launchMetricsComparison() {
+      if (!selectedA || !selectedB || selectedA.asin === selectedB.asin) return;
+
+      showLoading('metrics');
+      compareMetricsBtn.disabled = true;
+      compareNarrativeBtn.disabled = true;
+
+      try {
+        const response = await fetch('/.netlify/functions/verifymyth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'metrics',
+            asinA: selectedA.asin,
+            asinB: selectedB.asin
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Error en la llamada a la API de comparativa de datos.');
+        }
+
+        const data = await response.json();
+
+        if (!data || !data.success || !Array.isArray(data.products) || data.products.length !== 2) {
+          throw new Error('Formato de respuesta inesperado en verifymyth (metrics).');
+        }
+
+        selectedA = data.products[0];
+        selectedB = data.products[1];
+
+        renderCardsFromAPI(data.products);
+        renderTableFromAPI(data.products);
+
+        metricsLoaded = true;
+        showComparison();
+        updateCompareButtons();
+      } catch (err) {
+        console.error(err);
+        alert('No se ha podido generar la comparativa de datos. Revisa la función verifymyth o inténtalo de nuevo.');
+        showInitial();
+      }
+    }
+
+    async function launchNarrativeComparison() {
+      if (!selectedA || !selectedB || selectedA.asin === selectedB.asin) return;
+      if (!metricsLoaded) {
+        alert('Primero genera la comparativa de datos (IA) y después pide la opinión final.');
+        return;
+      }
+
+      narrativeEmpty.classList.add('hidden');
+      narrativeContent.classList.add('hidden');
+      narrativeLoading.classList.remove('hidden');
+      compareNarrativeBtn.disabled = true;
+
+      try {
+        const response = await fetch('/.netlify/functions/verifymyth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode: 'narrative',
+            asinA: selectedA.asin,
+            asinB: selectedB.asin
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Error en la llamada a la API de opinión final.');
+        }
+
+        const data = await response.json();
+
+        if (!data || !data.success || typeof data.text !== 'string') {
+          throw new Error('Formato de respuesta inesperado en verifymyth (narrative).');
+        }
+
+        narrativeContent.textContent = data.text;
+        narrativeLoading.classList.add('hidden');
+        narrativeContent.classList.remove('hidden');
+      } catch (err) {
+        console.error(err);
+        alert('No se ha podido generar la opinión final. Revisa la función verifymyth o inténtalo de nuevo.');
+        narrativeLoading.classList.add('hidden');
+        narrativeEmpty.classList.remove('hidden');
+      } finally {
+        updateCompareButtons();
+      }
+    }
+
+    // --- EVENTOS AUTOCOMPLETE ---
+    searchA.addEventListener('input', () => {
+      const term = searchA.value.trim();
+      const list = getFilteredCatalog(term);
+      renderSuggestions(list, suggestionsA, 'A');
+    });
+
+    searchB.addEventListener('input', () => {
+      const term = searchB.value.trim();
+      const list = getFilteredCatalog(term);
+      renderSuggestions(list, suggestionsB, 'B');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!suggestionsA.contains(e.target) && e.target !== searchA) {
+        suggestionsA.classList.add('hidden');
+      }
+      if (!suggestionsB.contains(e.target) && e.target !== searchB) {
+        suggestionsB.classList.add('hidden');
+      }
+    });
+
+    // --- EVENTOS ASIN ---
+    asinABtn.addEventListener('click', () => {
+      const asin = asinAInput.value.trim();
+      if (!asin) return;
+      const found = CATALOG.find(p => p.asin.toLowerCase() === asin.toLowerCase());
+      if (!found) {
+        alert('No encontramos ese ASIN en el catálogo Lama mock. Asegúrate de que existe en tu JSON.');
+        return;
+      }
+      selectProduct(found, 'A');
+    });
+
+    asinBBtn.addEventListener('click', () => {
+      const asin = asinBInput.value.trim();
+      if (!asin) return;
+      const found = CATALOG.find(p => p.asin.toLowerCase() === asin.toLowerCase());
+      if (!found) {
+        alert('No encontramos ese ASIN en el catálogo Lama mock. Asegúrate de que existe en tu JSON.');
+        return;
+      }
+      selectProduct(found, 'B');
+    });
+
+    // Botones IA
+    compareMetricsBtn.addEventListener('click', launchMetricsComparison);
+    compareNarrativeBtn.addEventListener('click', launchNarrativeComparison);
+
+    // Estado inicial
+    showInitial();
+    updateCompareButtons();
+  </script>
+</body>
+</html>
