@@ -36,31 +36,14 @@ function loadIndex() {
   return JSON.parse(raw);
 }
 
-function extractCatalog(indexData) {
-  if (Array.isArray(indexData)) return indexData;
-
-  if (indexData && Array.isArray(indexData.products)) {
-    return indexData.products;
-  }
-
-  if (indexData && typeof indexData === "object") {
-    return Object.keys(indexData).map((asin) => ({
-      asin,
-      ...(indexData[asin] || {}),
-    }));
-  }
-
-  return [];
-}
-
 function findProductMeta(indexData, asin) {
   if (!asin || !indexData) return null;
 
-  // 1) objeto con claves por ASIN
+  // 1) Objeto con claves por ASIN
   if (!Array.isArray(indexData) && typeof indexData === "object") {
     if (indexData[asin]) return indexData[asin];
 
-    // 2) array dentro de .products
+    // 2) Array dentro de .products
     if (Array.isArray(indexData.products)) {
       const p = indexData.products.find(
         (x) => x.asin === asin || x.ASIN === asin
@@ -69,7 +52,7 @@ function findProductMeta(indexData, asin) {
     }
   }
 
-  // 3) índice como array plano
+  // 3) Índice como array
   if (Array.isArray(indexData)) {
     return (
       indexData.find((x) => x.asin === asin || x.ASIN === asin) || null
@@ -140,6 +123,7 @@ async function callGemini(prompt) {
 }
 
 exports.handler = async (event) => {
+  // CORS preflight
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
@@ -148,54 +132,66 @@ exports.handler = async (event) => {
     };
   }
 
-  let mode = "metrics";
-  let asinA = "";
-  let asinB = "";
+  // Parámetros GET (para mode=index)
+  const queryParams = event.queryStringParameters || {};
 
-  // GET -> query; POST -> body JSON
-  if (event.httpMethod === "GET") {
-    const params = event.queryStringParameters || {};
-    mode = (params.mode || "metrics").toLowerCase();
-    asinA = (params.asinA || "").trim();
-    asinB = (params.asinB || "").trim();
-  } else {
+  // Parámetros POST (para metrics / narrative)
+  let bodyParams = {};
+  if (event.httpMethod === "POST" && event.body) {
     try {
-      const body = event.body ? JSON.parse(event.body) : {};
-      mode = (body.mode || "metrics").toLowerCase();
-      asinA = (body.asinA || "").trim();
-      asinB = (body.asinB || "").trim();
-    } catch (e) {
-      console.error("Error parseando body JSON:", e);
+      bodyParams = JSON.parse(event.body);
+    } catch {
+      bodyParams = {};
     }
   }
 
-  try {
-    const indexData = loadIndex();
+  const mode = (
+    queryParams.mode ||
+    bodyParams.mode ||
+    "metrics"
+  ).toLowerCase();
 
-    // --- MODO INDEX: devolver catálogo para el buscador ---
+  const asinA = (queryParams.asinA || bodyParams.asinA || "").trim();
+  const asinB = (queryParams.asinB || bodyParams.asinB || "").trim();
+
+  try {
+    // --- MODO INDEX: devolver catálogo para el buscador por nombre ---
     if (mode === "index") {
-      const catalog = extractCatalog(indexData);
+      const indexData = loadIndex();
+
+      let products = [];
+      if (Array.isArray(indexData)) {
+        products = indexData;
+      } else if (Array.isArray(indexData.products)) {
+        products = indexData.products;
+      } else if (typeof indexData === "object" && indexData !== null) {
+        products = Object.values(indexData);
+      }
+
+      const length = products.length;
+
       return {
         statusCode: 200,
         headers: corsHeaders,
         body: JSON.stringify({
           success: true,
           mode: "index",
-          entries: catalog.length,
-          products: catalog,
+          entries: length,
+          products,
         }),
       };
     }
 
-    // A partir de aquí siempre necesitamos ambos ASIN
+    // A partir de aquí, todos los modos necesitan asinA y asinB
     if (!asinA || !asinB) {
       throw new Error(
-        "Debes indicar asinA y asinB (por ejemplo asinA=B0XXXX y asinB=B0YYYY)."
+        "Debes enviar asinA y asinB (por ejemplo asinA=XXX&asinB=YYY)."
       );
     }
 
-    // --- MODO METRICS: tarjetas + resumen rápido de datos ---
+    // --- MODO METRICS: tarjetas + resumen rápido centrado en datos ---
     if (mode === "metrics") {
+      const indexData = loadIndex();
       const productA = findProductMeta(indexData, asinA);
       const productB = findProductMeta(indexData, asinB);
 
@@ -208,13 +204,16 @@ exports.handler = async (event) => {
       const quickSummaryPrompt = `
 Eres el asistente del Comparador Lama.
 
-Tienes los datos JSON de dos productos (A y B). Escribe un único resumen MUY breve y claro para un usuario medio (máximo 90–110 palabras).
+Tienes los datos JSON de dos productos (A y B), con puntuaciones medias, distribución de estrellas, probabilidad de chasco y los principales pros y contras.
 
-Objetivo:
-- Explicar en 3–5 frases en qué se diferencian sus puntos fuertes principales.
-- Resumir de forma neutra para qué sirve mejor cada uno, sin decir todavía cuál debería comprar la persona.
-- Tono neutro, cercano y fácil de leer.
-- No menciones la palabra "JSON", ni "modelo de lenguaje", ni "Gemini". No hagas listas ni títulos, solo un texto corrido.
+Escribe un único resumen muy breve y claro (máximo unas 140 palabras) para un usuario medio, centrado en:
+
+- Cómo se comparan en calidad percibida y riesgo de chasco.
+- Qué tipo de ventajas destacan los usuarios en cada uno.
+- Qué tipo de problemas son más frecuentes en cada uno.
+- En qué escenarios generales parece encajar mejor A y en cuáles B.
+
+No menciones “JSON”, ni “modelo de lenguaje”, ni “Gemini” y no uses listas ni títulos. Solo un texto corrido.
 
 [PRODUCTO A JSON]
 ${JSON.stringify(productA)}
@@ -232,14 +231,14 @@ ${JSON.stringify(productB)}
           success: true,
           mode: "metrics",
           products: [productA, productB],
-          analysis: quickSummary, // el frontend lo muestra directamente
-          quickSummary,
+          analysis: quickSummary,
         }),
       };
     }
 
-    // --- MODO NARRATIVE: opinión final corta y orientada a decisión ---
+    // --- MODO NARRATIVE: opinión final corta, basada en meta-reviews ---
     if (mode === "narrative") {
+      const indexData = loadIndex();
       const productA = findProductMeta(indexData, asinA);
       const productB = findProductMeta(indexData, asinB);
 
@@ -255,30 +254,28 @@ ${JSON.stringify(productB)}
       const prompt = `
 Actúas como asesor imparcial del Comparador Lama.
 
-El usuario ya ha leído un resumen rápido sobre las diferencias de los productos A y B.
-Ahora quiere una ayuda FINAL para decidir.
+Te doy dos meta-reviews en texto (A y B) más algunos datos de contexto. Con eso debes escribir una "opinión final" MUY breve y útil para un usuario medio.
 
 Instrucciones:
-- Máximo 150–170 palabras.
-- No repitas frases ni ideas de forma casi idéntica al resumen rápido: aporta información más práctica y enfocada en la decisión.
-- Organiza el texto en 3 bloques de 2–3 frases cada uno, separados por un salto de línea:
-  1) Explica para qué tipo de persona o situación encaja mejor el Producto A (hábitos, espacio, nivel de experiencia, frecuencia de uso…).
-  2) Explica para qué tipo de persona o situación encaja mejor el Producto B.
-  3) Cierra con 1–2 frases ayudando a elegir: del tipo "si te ves más en X, ve a por A; si te ves más en Y, mejor B".
-- Usa frases cortas y lenguaje sencillo. Nada de tecnicismos.
+- Máximo ~170 palabras en total.
+- Empieza con 1–2 frases explicando muy rápido qué enfoque tiene cada producto (tipo de uso, sensaciones, a quién le suele gustar).
+- Después, en 3–4 frases más, explica:
+  - En qué tipo de persona o situación encaja mejor el Producto A.
+  - En qué tipo de persona o situación encaja mejor el Producto B.
+- Usa frases cortas, lenguaje sencillo y tono cercano.
+- No uses títulos, listas ni negritas.
 - No menciones "Amazon", "reseñas", "modelo de lenguaje", "Gemini" ni "JSON".
-- No uses listas ni viñetas; basta con texto corrido separado en párrafos.
 
 [PRODUCTO A – DATOS JSON]
 ${JSON.stringify(productA)}
 
-[PRODUCTO A – RESUMEN BLOG]
+[PRODUCTO A – META-REVIEW]
 ${blogA}
 
 [PRODUCTO B – DATOS JSON]
 ${JSON.stringify(productB)}
 
-[PRODUCTO B – RESUMEN BLOG]
+[PRODUCTO B – META-REVIEW]
 ${blogB}
       `.trim();
 
@@ -290,8 +287,7 @@ ${blogB}
         body: JSON.stringify({
           success: true,
           mode: "narrative",
-          text: finalOpinion, // el frontend usa data.text
-          finalOpinion,
+          text: finalOpinion,
         }),
       };
     }
