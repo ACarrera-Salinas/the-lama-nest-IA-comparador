@@ -299,14 +299,15 @@ ${blogB}
         error: "Modo no reconocido. Usa 'index', 'metrics' o 'narrative'."
       })
     };
-  } catch (err) {
-    console.error("Error general verifymyth:", err);
-    return {
-      statusCode: 500,
-      headers: corsHeaders,
-      body: JSON.stringify({
-        success: false,
-        error: "Error interno en verifymyth."
+} catch (err) {
+  console.error("Error general verifymyth:", err);
+
+  return {
+    statusCode: 500,
+    headers: corsHeaders,
+    body: JSON.stringify({
+      success: false,
+      error: "Error interno en verifymyth: " + (err.message || String(err))
       })
     };
   }
