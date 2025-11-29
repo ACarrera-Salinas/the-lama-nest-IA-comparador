@@ -69,6 +69,9 @@
           nombre_producto:
             p.nombre_producto || p.nombre || p.title || "Producto sin nombre",
           market: p.market || p.marketplace || "—",
+          mean_stars:
+            p.mean_stars ?? p.media_estrellas ?? p.rating ?? null,
+          n_reviews: p.n_reviews ?? p.n_total ?? p.stars_count_total ?? null,
         };
       }
 
@@ -84,16 +87,10 @@
 
       function ProductMiniCard({ product }) {
         if (!product) return null;
-        const asin = product.asin || product.ASIN || "—";
-        const name =
-          product.nombre_producto || product.nombre || product.title || "—";
-        const mean =
-          product.mean_stars ??
-          product.media_estrellas ??
-          product.rating ??
-          null;
-        const nReviews =
-          product.n_reviews ?? product.n_total ?? product.stars_count_total;
+        const asin = product.asin || "—";
+        const name = product.nombre_producto || "—";
+        const mean = product.mean_stars;
+        const nReviews = product.n_reviews;
 
         return (
           <div className="mt-3 border border-amber-200 bg-amber-50/60 rounded-xl p-3 text-sm fade-in">
@@ -144,25 +141,24 @@
 
         return (
           <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-56 overflow-auto text-sm">
-            {items.map((p) => {
-              const asin = p.asin || p.ASIN;
-              const name =
-                p.nombre_producto || p.nombre || p.title || "Producto";
-              const mean =
-                p.mean_stars ?? p.media_estrellas ?? p.rating ?? null;
+            {items.map((p, idx) => {
+              const norm = normalizeProduct(p);
+              const asin = norm.asin || `idx-${idx}`;
+              const name = norm.nombre_producto;
+              const mean = norm.mean_stars;
               return (
                 <button
-                  key={asin || name}
+                  key={asin}
                   type="button"
                   className="w-full text-left px-3 py-2 hover:bg-amber-50"
-                  onClick={() => onSelect(p)}
+                  onClick={() => onSelect(norm)}
                 >
                   <div className="font-medium text-slate-900 line-clamp-1">
                     {name}
                   </div>
                   <div className="text-[11px] text-slate-500">
-                    ASIN: {asin || "—"} · {mean ?? "?"}★ ·{" "}
-                    {p.categoria_inferida || "—"}
+                    ASIN: {norm.asin || "—"} · {mean ?? "?"}★ ·{" "}
+                    {norm.categoria_inferida || "—"}
                   </div>
                 </button>
               );
@@ -182,6 +178,7 @@
         const [query, setQuery] = useState("");
         const [suggestions, setSuggestions] = useState([]);
 
+        // Sugerencias al escribir nombre
         useEffect(() => {
           if (!query || query.trim().length < 3 || !catalog.length) {
             setSuggestions([]);
@@ -196,45 +193,41 @@
           setSuggestions(results.slice(0, 7));
         }, [query, catalog]);
 
-        const ensureIndexLoaded = () => {
-          if (!catalog.length) {
-            alert(
-              "El índice Lama todavía no se ha cargado o está vacío. Revisa la función verifymyth (modo=index) o recarga la página."
-            );
-            return false;
-          }
-          return true;
-        };
-
-        const handleSelect = (productRaw) => {
-          const product = normalizeProduct(productRaw);
-          if (!product.asin) {
+        const handleSelect = (normProduct) => {
+          if (!normProduct.asin) {
             alert(
               "El producto del índice no tiene ASIN. Revisa tu lama_index.json."
             );
             return;
           }
-          onSelectProduct(product);
-          onChangeAsin(product.asin);
-          setQuery(product.nombre_producto);
+          onSelectProduct(normProduct);
+          onChangeAsin(normProduct.asin.toUpperCase());
+          setQuery(normProduct.nombre_producto);
           setSuggestions([]);
         };
 
+        // Botón "Usar ASIN": actualiza el ASIN y, si el índice lo conoce, muestra mini-card
         const handleUseAsinClick = () => {
-          const asin = (asinValue || "").trim();
+          const asin = (asinValue || "").trim().toUpperCase();
           if (!asin) return;
-          if (!ensureIndexLoaded()) return;
 
-          const asinUpper = asin.toUpperCase();
+          if (!catalog.length) {
+            // Sin índice, no pasa nada grave: se puede comparar igual por ASIN
+            alert(
+              "No hay índice cargado, pero puedes seguir usando este ASIN para comparar en la parte de abajo."
+            );
+            return;
+          }
+
           const productRaw = catalog.find((p) => {
             const a1 = (p.asin || "").toUpperCase();
             const a2 = (p.ASIN || "").toUpperCase();
-            return a1 === asinUpper || a2 === asinUpper;
+            return a1 === asin || a2 === asin;
           });
 
           if (!productRaw) {
             alert(
-              "No encontramos ese ASIN en el índice Lama. Revisa el código o añade el producto a lama_index.json."
+              "No encontramos ese ASIN en el índice Lama. Igual es un producto sin meta-review; puedes seguir comparando por ASIN, pero no habrá mini-card."
             );
             return;
           }
@@ -244,10 +237,17 @@
           setQuery(product.nombre_producto || "");
         };
 
+        // Botón "Usar nombre": busca en índice y rellena ASIN + mini-card
         const handleUseNameClick = () => {
           const text = (query || "").trim().toLowerCase();
           if (!text) return;
-          if (!ensureIndexLoaded()) return;
+
+          if (!catalog.length) {
+            alert(
+              "El índice todavía no se ha cargado o está vacío; ahora mismo la búsqueda por nombre no está disponible."
+            );
+            return;
+          }
 
           const candidates = catalog.filter((p) =>
             (p.nombre_producto || p.nombre || p.title || "")
@@ -268,7 +268,7 @@
             return;
           }
           onSelectProduct(product);
-          onChangeAsin(product.asin);
+          onChangeAsin(product.asin.toUpperCase());
           setQuery(product.nombre_producto || "");
           setSuggestions([]);
         };
@@ -441,23 +441,26 @@
               setCatalog(products);
               setCatalogStatus("ready");
             } catch (err) {
-              console.error(err);
+              console.error("Error cargando índice:", err);
               setCatalogStatus("error");
-              setCatalogError(err.message);
+              setCatalogError(err.message || String(err));
             }
           }
           loadIndex();
         }, []);
 
-        const canCompare =
-          selected1 &&
-          selected2 &&
-          selected1.asin &&
-          selected2.asin &&
-          selected1.asin !== selected2.asin;
+        // Ahora la condición de poder comparar se basa SOLO en los ASIN escritos
+        const canCompare = (() => {
+          const a = (asin1 || "").trim().toUpperCase();
+          const b = (asin2 || "").trim().toUpperCase();
+          return a && b && a !== b;
+        })();
 
         const handleCompareClick = async () => {
-          if (!canCompare) return;
+          const a = (asin1 || "").trim().toUpperCase();
+          const b = (asin2 || "").trim().toUpperCase();
+          if (!a || !b || a === b) return;
+
           setMetricsStatus("loading");
           setMetricsError("");
           setMetricsData(null);
@@ -471,8 +474,8 @@
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 mode: "metrics",
-                asinA: selected1.asin,
-                asinB: selected2.asin,
+                asinA: a,
+                asinB: b,
               }),
             });
             const data = await res.json();
@@ -489,14 +492,17 @@
             });
             setMetricsStatus("success");
           } catch (err) {
-            console.error(err);
+            console.error("Error en metrics:", err);
             setMetricsStatus("error");
-            setMetricsError(err.message);
+            setMetricsError(err.message || String(err));
           }
         };
 
         const handleNarrativeClick = async () => {
-          if (!canCompare || metricsStatus !== "success") return;
+          const a = (asin1 || "").trim().toUpperCase();
+          const b = (asin2 || "").trim().toUpperCase();
+          if (!a || !b || a === b || metricsStatus !== "success") return;
+
           setNarrativeStatus("loading");
           setNarrativeError("");
           setNarrativeText("");
@@ -507,8 +513,8 @@
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 mode: "narrative",
-                asinA: selected1.asin,
-                asinB: selected2.asin,
+                asinA: a,
+                asinB: b,
               }),
             });
             const data = await res.json();
@@ -520,9 +526,9 @@
             setNarrativeText(data.text || "");
             setNarrativeStatus("success");
           } catch (err) {
-            console.error(err);
+            console.error("Error en narrative:", err);
             setNarrativeStatus("error");
-            setNarrativeError(err.message);
+            setNarrativeError(err.message || String(err));
           }
         };
 
@@ -582,8 +588,9 @@
                 </div>
 
                 <p className="mt-4 text-xs text-slate-500 text-center">
-                  Selecciona dos productos distintos para activar los botones de
-                  IA.
+                  Puedes comparar sólo con los códigos ASIN, o elegir productos
+                  desde el índice por nombre. Asegúrate de que los dos ASIN
+                  sean distintos para activar los botones de IA.
                 </p>
 
                 {/* Botones IA */}
@@ -665,7 +672,7 @@
                       {[metricsData.productA, metricsData.productB].map(
                         (p, idx) => (
                           <div
-                            key={p.asin || p.ASIN}
+                            key={p.asin || `prod-${idx}`}
                             className="bg-white border border-slate-200 rounded-2xl p-5 text-sm flex flex-col"
                           >
                             <div className="flex justify-between items-start mb-3">
