@@ -9,7 +9,7 @@
     />
     <meta
       name="description"
-      content="Comparador IA de TheLamaNest: elige dos productos que ya tengan meta-review y deja que el Lama sabio te ayude a decidir."
+      content="Comparador IA de TheLamaNest: elige dos productos...tengan meta-review y deja que el Lama sabio te ayude a decidir."
     />
 
     <!-- Tailwind CDN -->
@@ -176,6 +176,7 @@
       }) {
         const [query, setQuery] = useState("");
         const [suggestions, setSuggestions] = useState([]);
+        const [showAsinInfo, setShowAsinInfo] = useState(false);
 
         useEffect(() => {
           if (!query || query.trim().length < 3 || !catalog.length) {
@@ -214,75 +215,124 @@
         };
 
         return (
-          <div className="bg-white border border-amber-200/70 rounded-2xl p-4 md:p-5 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-6 h-6 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center font-bold">
-                {slot}
+          <>
+            <div className="bg-white border border-amber-200/70 rounded-2xl p-4 md:p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center font-bold">
+                  {slot}
+                </div>
+                <h2 className="font-semibold text-slate-900">
+                  Producto {slot}
+                </h2>
               </div>
-              <h2 className="font-semibold text-slate-900">Producto {slot}</h2>
+
+              <div className="space-y-3 text-sm">
+                <div className="relative">
+                  <label className="block text-xs font-medium text-slate-500 mb-1">
+                    Busca por nombre, marca o modelo
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-slate-300">
+                      🔍
+                    </span>
+                    <input
+                      type="text"
+                      className="w-full pl-8 pr-3 py-2 rounded-lg bg-amber-50 border border-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:bg-white text-sm"
+                      placeholder="Ej: Oral-B Pro 3..."
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (suggestions.length > 0) {
+                            handleSelect(suggestions[0]); // selecciona el primer sugerido
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                  <SuggestionsList items={suggestions} onSelect={handleSelect} />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="block text-xs font-medium text-slate-500">
+                    ¿Vienes de Amazon o ya conoces el código?
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      className="flex-1 px-3 py-2 rounded-lg bg-amber-50 border border-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:bg-white text-sm"
+                      placeholder="Ej: B0CLRYN7BX"
+                      value={asinValue}
+                      onChange={(e) =>
+                        onChangeAsin(e.target.value.toUpperCase())
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={handleUseAsinClick}
+                      className="px-3 py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-black transition-colors"
+                    >
+                      Usar ASIN
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowAsinInfo(true)}
+                      className="px-2 py-2 rounded-lg bg-amber-100 text-amber-900 text-xs font-semibold border border-amber-300 hover:bg-amber-200 transition-colors"
+                      aria-label="¿Qué es el código ASIN?"
+                    >
+                      i
+                    </button>
+                  </div>
+                </div>
+
+                <div className="text-xs text-slate-500">
+                  {selectedProduct ? (
+                    <span>Producto seleccionado:</span>
+                  ) : (
+                    <span>Todavía no has seleccionado ningún producto.</span>
+                  )}
+                </div>
+
+                <ProductMiniCard product={selectedProduct} />
+              </div>
             </div>
 
-            <div className="space-y-3 text-sm">
-              <div className="relative">
-                <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Busca por nombre, marca o modelo
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-slate-300">
-                    🔍
-                  </span>
-                  <input
-                    type="text"
-                    className="w-full pl-8 pr-3 py-2 rounded-lg bg-amber-50 border border-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:bg-white text-sm"
-                    placeholder="Ej: Oral-B Pro 3..."
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        if (suggestions.length > 0) {
-                          handleSelect(suggestions[0]); // selecciona el primer sugerido
-                        }
-                      }
-                    }}
-                  />
-                </div>
-                <SuggestionsList items={suggestions} onSelect={handleSelect} />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="block text-xs font-medium text-slate-500">
-                  ¿Vienes de Amazon o ya conoces el código?
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    className="flex-1 px-3 py-2 rounded-lg bg-amber-50 border border-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:bg-white text-sm"
-                    placeholder="Ej: B0CLRYN7BX"
-                    value={asinValue}
-                    onChange={(e) => onChangeAsin(e.target.value.toUpperCase())}
-                  />
+            {/* Modal info ASIN */}
+            {showAsinInfo && (
+              <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
+                <div className="bg-white rounded-2xl shadow-xl max-w-md w-[90%] md:w-full p-5 relative">
                   <button
                     type="button"
-                    onClick={handleUseAsinClick}
-                    className="px-3 py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-black transition-colors"
+                    onClick={() => setShowAsinInfo(false)}
+                    className="absolute top-2 right-2 text-slate-400 hover:text-slate-600 text-sm"
+                    aria-label="Cerrar"
                   >
-                    Usar ASIN
+                    ✕
                   </button>
+                  <h3 className="text-sm font-semibold text-slate-900 mb-2">
+                    ¿Qué es el código ASIN?
+                  </h3>
+                  <p className="text-xs text-slate-600 mb-3">
+                    El ASIN es un identificador único que usa Amazon para cada
+                    producto. Si estás viendo una meta-review de TheLamaNest,
+                    encontrarás el ASIN en la parte superior de la ficha del
+                    producto.
+                  </p>
+                  <img
+                    src="https://thelamanest.com/wp-content/uploads/2025/11/Captura-de-pantalla-2025-11-29-a-las-19.35.20.png"
+                    alt="Ejemplo de dónde encontrar el código ASIN en una meta-review de TheLamaNest"
+                    className="w-full rounded-lg border border-slate-200"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-2">
+                    Copia ese código (por ejemplo, B0CLRYN7BX) y pégalo en la
+                    casilla de ASIN para seleccionar exactamente ese producto en
+                    el comparador.
+                  </p>
                 </div>
               </div>
-
-              <div className="text-xs text-slate-500">
-                {selectedProduct ? (
-                  <span>Producto seleccionado:</span>
-                ) : (
-                  <span>Todavía no has seleccionado ningún producto.</span>
-                )}
-              </div>
-
-              <ProductMiniCard product={selectedProduct} />
-            </div>
-          </div>
+            )}
+          </>
         );
       }
 
@@ -461,13 +511,16 @@
                 <div className="flex justify-center mb-4">
                   <LlamaBadge />
                 </div>
-                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 mb-2">
-                  El comparador IA de TheLamaNest
+                <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 mb-2">
+                  Sabidur-IA Lama
                 </h1>
+                <p className="text-lg md:text-xl font-semibold text-slate-900 mb-2">
+                  El súper-comparador IA de TheLamaNest
+                </p>
                 <p className="text-sm md:text-base text-slate-600 max-w-2xl mx-auto">
                   Elige dos productos que ya tengan meta-review en TheLamaNest,
-                  compáralos con datos reales de reseñas y deja que el Lama
-                  sabio te ayude a decidir cuál encaja mejor contigo.
+                  compáralos con datos reales de reseñas y deja que los datos
+                  objetivos te ayuden a decidir cuál encaja mejor contigo.
                 </p>
 
                 {catalogStatus === "loading" && (
@@ -486,7 +539,7 @@
               <section className="bg-amber-50/70 border border-amber-200 rounded-3xl p-4 md:p-6 mb-8">
                 <div className="grid md:grid-cols-2 gap-4 md:gap-6">
                   <ProductSelector
-                    slot={1}
+                    slot="A"
                     catalog={catalog}
                     selectedProduct={selected1}
                     asinValue={asin1}
@@ -494,7 +547,7 @@
                     onSelectProduct={setSelected1}
                   />
                   <ProductSelector
-                    slot={2}
+                    slot="B"
                     catalog={catalog}
                     selectedProduct={selected2}
                     asinValue={asin2}
@@ -672,19 +725,19 @@
 
                               <div className="mt-3">
                                 <h3 className="text-xs font-semibold text-emerald-800 mb-1">
-                                  Lo que más suele gustar
+                                  Lo que suele gustar más (según las reseñas)
                                 </h3>
                                 <BulletList items={p.top_pros} tone="good" />
                               </div>
 
                               <div className="mt-3 mb-4">
                                 <h3 className="text-xs font-semibold text-rose-800 mb-1">
-                                  Lo que puede mejorar un poquito
+                                  Lo que da más problemas o convence menos
                                 </h3>
                                 <BulletList items={p.top_contras} tone="bad" />
                               </div>
 
-                              {/* CTA compra */}
+                              {/* CTA meta-review */}
                               <div className="mt-auto pt-2">
                                 <a
                                   href={`https://thelamanest.com/es-${p.asin}`}
@@ -693,8 +746,8 @@
                                   className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition-colors"
                                 >
                                   {idx === 0
-                                    ? "Comprar producto A"
-                                    : "Comprar producto B"}
+                                    ? "Ver Meta-review de Producto A"
+                                    : "Ver Meta-review de Producto B"}
                                 </a>
                               </div>
                             </div>
@@ -743,7 +796,7 @@
                 )}
 
                 {narrativeStatus === "success" && narrativeText && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-sm text-slate-800 fade-in">
+                  <div className="bg-amber-50 border-amber-200 border rounded-2xl p-6 text-sm text-slate-800 fade-in">
                     <h2 className="font-semibold text-slate-900 mb-2">
                       Conclusión final de la IA Lama
                     </h2>
