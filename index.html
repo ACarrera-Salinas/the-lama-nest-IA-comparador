@@ -60,12 +60,13 @@
     <script type="text/babel">
       const { useState, useEffect } = React;
 
-      // ============================
-      // Tamaños del logo de la lama
-      // (cámbialos a tu gusto, en px)
-      // ============================
-      const LAMA_BADGE_SIZE = 112; // tamaño del recuadro amarillo
-      const LAMA_ICON_SIZE = 88;   // tamaño de la imagen dentro
+      // ==========================
+      // Config logo comparador
+      // ==========================
+      const LAMA_BADGE_SIZE = 160; // tamaño del recuadro amarillo (px)
+      const LAMA_ICON_SIZE = 140;  // tamaño de la imagen interior (px)
+      const LAMA_ICON_URL =
+        "https://thelamanest.com/wp-content/uploads/2025/11/ChatGPT-Image-29-nov-2025-18_44_56.png";
 
       // --- Componentes auxiliares ---
 
@@ -76,11 +77,13 @@
             style={{ width: LAMA_BADGE_SIZE, height: LAMA_BADGE_SIZE }}
           >
             <img
-              src="https://thelamanest.com/wp-content/uploads/2025/11/ChatGPT-Image-29-nov-2025-18_44_56.png"
-              alt="TheLamaNest - Lama"
-              className="object-contain"
-              style={{ width: LAMA_ICON_SIZE, height: LAMA_ICON_SIZE }}
-              loading="lazy"
+              src={LAMA_ICON_URL}
+              alt="Logo comparador IA de TheLamaNest"
+              style={{
+                width: LAMA_ICON_SIZE,
+                height: LAMA_ICON_SIZE,
+                objectFit: "contain",
+              }}
             />
           </div>
         );
@@ -434,7 +437,7 @@
             const data = await res.json();
             if (!data.success) {
               throw new Error(
-                data.error || "Error generando la opinión de la IA."
+                data.error || "Error generando la conclusión de la IA."
               );
             }
             setNarrativeText(data.text || "");
@@ -486,6 +489,8 @@
                     onChangeAsin={setAsin1}
                     onSelectProduct={setSelected1}
                   />
+               
+
                   <ProductSelector
                     slot={2}
                     catalog={catalog}
@@ -501,7 +506,7 @@
                   IA.
                 </p>
 
-                {/* Botones IA */}
+                {/* Botones IA (parte superior) */}
                 <div className="mt-5 flex flex-col md:flex-row gap-3 justify-center">
                   <button
                     type="button"
@@ -518,8 +523,8 @@
                       1
                     </span>
                     {metricsStatus === "loading"
-                      ? "Comparando datos..."
-                      : "Comparativa de datos (IA)"}
+                      ? "Comparando productos..."
+                      : "Comparativa de productos (IA)"}
                   </button>
 
                   <button
@@ -541,13 +546,13 @@
                       2
                     </span>
                     {narrativeStatus === "loading"
-                      ? "Pidiendo opinión al Lama..."
-                      : "Opinión final (IA)"}
+                      ? "Pidiendo conclusión al Lama..."
+                      : "Conclusión final (IA)"}
                   </button>
                 </div>
               </section>
 
-              {/* Resultados comparativa de datos */}
+              {/* Resultados comparativa de productos */}
               <section className="space-y-6">
                 {metricsStatus === "loading" && (
                   <div className="bg-white border border-slate-200 rounded-2xl p-6 text-sm text-slate-600 text-center fade-in">
@@ -575,6 +580,32 @@
                         </p>
                       </div>
                     )}
+
+                    {/* Botón Conclusión final justo debajo del resumen */}
+                    <div className="flex justify-center mt-2 mb-4">
+                      <button
+                        type="button"
+                        onClick={handleNarrativeClick}
+                        disabled={
+                          !canCompare ||
+                          metricsStatus !== "success" ||
+                          narrativeStatus === "loading"
+                        }
+                        className={
+                          "px-5 py-2.5 rounded-full text-sm font-semibold flex items-center justify-center gap-2 " +
+                          (canCompare && metricsStatus === "success"
+                            ? "bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200"
+                            : "bg-slate-200 text-slate-500 cursor-not-allowed")
+                        }
+                      >
+                        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/40 border border-white/60 text-[11px]">
+                          2
+                        </span>
+                        {narrativeStatus === "loading"
+                          ? "Pidiendo conclusión al Lama..."
+                          : "Conclusión final (IA)"}
+                      </button>
+                    </div>
 
                     <div className="grid md:grid-cols-2 gap-4 fade-in">
                       {[metricsData.productA, metricsData.productB].map(
@@ -673,16 +704,16 @@
                   </>
                 )}
 
-                {/* Opinión final IA sobre blogs */}
+                {/* Conclusión final IA sobre blogs */}
                 {narrativeStatus === "loading" && (
                   <div className="bg-white border border-slate-200 rounded-2xl p-6 text-sm text-slate-700 text-center fade-in">
-                    Leyendo las meta-reviews y preparando una opinión final...
+                    Leyendo las meta-reviews y preparando una conclusión final...
                   </div>
                 )}
 
                 {narrativeStatus === "error" && (
                   <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-sm text-red-700 fade-in">
-                    Ha habido un problema con la opinión final de la IA:{" "}
+                    Ha habido un problema con la conclusión final de la IA:{" "}
                     {narrativeError}
                   </div>
                 )}
@@ -690,7 +721,7 @@
                 {narrativeStatus === "success" && narrativeText && (
                   <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-sm text-slate-800 fade-in">
                     <h2 className="font-semibold text-slate-900 mb-2">
-                      Opinión final de la IA Lama
+                      Conclusión final de la IA Lama
                     </h2>
                     <p className="whitespace-pre-line">{narrativeText}</p>
                   </div>
