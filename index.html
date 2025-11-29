@@ -33,12 +33,10 @@
           "Segoe UI", sans-serif;
       }
 
-      /* Scroll suave dentro de la página */
       html {
         scroll-behavior: smooth;
       }
 
-      /* Pequeña animación de aparición */
       .fade-in {
         animation: fade-in 0.4s ease-out;
       }
@@ -320,23 +318,21 @@
         const [asin2, setAsin2] = useState("");
 
         const [metricsStatus, setMetricsStatus] = useState("idle"); // idle | loading | success | error
-        const [metricsError, setMetricsError] = useState("");
+        the [metricsError, setMetricsError] = useState("");
         const [metricsData, setMetricsData] = useState(null);
 
         const [narrativeStatus, setNarrativeStatus] = useState("idle"); // idle | loading | success | error
         const [narrativeError, setNarrativeError] = useState("");
         const [narrativeText, setNarrativeText] = useState("");
 
-        // Cargar índice desde la función Netlify
+        // Cargar índice desde la función Netlify (GET con query, como espera el backend)
         useEffect(() => {
           async function loadIndex() {
             try {
               setCatalogStatus("loading");
-              const res = await fetch("/.netlify/functions/verifymyth", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ mode: "index" })
-              });
+              const res = await fetch(
+                "/.netlify/functions/verifymyth?mode=index"
+              );
               const data = await res.json();
               if (!data.success) {
                 throw new Error(data.error || "Error al cargar el índice.");
